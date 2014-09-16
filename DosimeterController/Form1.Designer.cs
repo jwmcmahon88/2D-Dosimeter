@@ -48,10 +48,7 @@
             this.statusDataFile = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.statusLaser = new System.Windows.Forms.Label();
-            this.label14 = new System.Windows.Forms.Label();
-            this.statusCounter = new System.Windows.Forms.Label();
-            this.label12 = new System.Windows.Forms.Label();
-            this.statusPrinter = new System.Windows.Forms.Label();
+            this.status = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.saveButton = new System.Windows.Forms.Button();
             this.logText = new System.Windows.Forms.TextBox();
@@ -248,10 +245,7 @@
             this.groupBox2.Controls.Add(this.statusDataFile);
             this.groupBox2.Controls.Add(this.label16);
             this.groupBox2.Controls.Add(this.statusLaser);
-            this.groupBox2.Controls.Add(this.label14);
-            this.groupBox2.Controls.Add(this.statusCounter);
-            this.groupBox2.Controls.Add(this.label12);
-            this.groupBox2.Controls.Add(this.statusPrinter);
+            this.groupBox2.Controls.Add(this.status);
             this.groupBox2.Controls.Add(this.label9);
             this.groupBox2.Location = new System.Drawing.Point(12, 12);
             this.groupBox2.Name = "groupBox2";
@@ -288,51 +282,19 @@
             this.statusLaser.ForeColor = System.Drawing.Color.Maroon;
             this.statusLaser.Location = new System.Drawing.Point(51, 46);
             this.statusLaser.Name = "statusLaser";
-            this.statusLaser.Size = new System.Drawing.Size(53, 13);
+            this.statusLaser.Size = new System.Drawing.Size(0, 13);
             this.statusLaser.TabIndex = 5;
-            this.statusLaser.Text = "Inactive";
             // 
-            // label14
+            // status
             // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(6, 46);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(36, 13);
-            this.label14.TabIndex = 4;
-            this.label14.Text = "Laser:";
-            this.label14.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            // 
-            // statusCounter
-            // 
-            this.statusCounter.AutoSize = true;
-            this.statusCounter.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.statusCounter.ForeColor = System.Drawing.Color.Maroon;
-            this.statusCounter.Location = new System.Drawing.Point(51, 31);
-            this.statusCounter.Name = "statusCounter";
-            this.statusCounter.Size = new System.Drawing.Size(53, 13);
-            this.statusCounter.TabIndex = 3;
-            this.statusCounter.Text = "Inactive";
-            // 
-            // label12
-            // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(6, 31);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(47, 13);
-            this.label12.TabIndex = 2;
-            this.label12.Text = "Counter:";
-            this.label12.TextAlign = System.Drawing.ContentAlignment.TopRight;
-            // 
-            // statusPrinter
-            // 
-            this.statusPrinter.AutoSize = true;
-            this.statusPrinter.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.statusPrinter.ForeColor = System.Drawing.Color.Maroon;
-            this.statusPrinter.Location = new System.Drawing.Point(51, 16);
-            this.statusPrinter.Name = "statusPrinter";
-            this.statusPrinter.Size = new System.Drawing.Size(53, 13);
-            this.statusPrinter.TabIndex = 1;
-            this.statusPrinter.Text = "Inactive";
+            this.status.AutoSize = true;
+            this.status.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.status.ForeColor = System.Drawing.Color.Maroon;
+            this.status.Location = new System.Drawing.Point(51, 16);
+            this.status.Name = "status";
+            this.status.Size = new System.Drawing.Size(53, 13);
+            this.status.TabIndex = 1;
+            this.status.Text = "Inactive";
             // 
             // label9
             // 
@@ -341,7 +303,7 @@
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(40, 13);
             this.label9.TabIndex = 0;
-            this.label9.Text = "Printer:";
+            this.label9.Text = "Status:";
             this.label9.TextAlign = System.Drawing.ContentAlignment.TopRight;
             // 
             // saveButton
@@ -411,12 +373,9 @@
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Button startButton;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.Label statusPrinter;
+        private System.Windows.Forms.Label status;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label statusLaser;
-        private System.Windows.Forms.Label label14;
-        private System.Windows.Forms.Label statusCounter;
-        private System.Windows.Forms.Label label12;
         private System.Windows.Forms.Button saveButton;
         private System.Windows.Forms.TextBox logText;
         private System.Windows.Forms.Button scanLoadButton;

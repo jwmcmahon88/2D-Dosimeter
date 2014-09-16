@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,58 +9,60 @@ using System.Threading;
 
 namespace DosimeterController
 {
-    public enum PrinterStatus { Initializing, Idle, Moving, Error };
-    public enum LaserStatus { Initializing, Disabled, Enabled };
-    public enum CounterStatus { Initializing, Disabled, Enabled };
+    public enum HardwareStatus { Initializing, Idle, Homing, Scanning, Error }
 
     public delegate void LogMessageHandler(string message);
-    public delegate void PrinterStatusChangeDelegate(PrinterStatus status);
-    public delegate void LaserStatusChangeDelegate(LaserStatus status);
-    public delegate void CounterStatusChangeDelegate(CounterStatus status);
+    public delegate void HardwareStatusChangeDelegate(HardwareStatus status);
 
     public class HardwareController
     {
         // Public bindings
-        public event PrinterStatusChangeDelegate OnPrinterStatusChange = _ => {};
-        public event LaserStatusChangeDelegate OnLaserStatusChange = _ => { };
-        public event CounterStatusChangeDelegate OnCounterStatusChange = _ => { };
+        public event HardwareStatusChangeDelegate OnHardwareStatusChange = _ => {};
         public event LogMessageHandler OnLogMessage = _ => {};
 
-        PrinterStatus _printerStatus;
-        public PrinterStatus PrinterStatus
-        {
-            get { return _printerStatus; }
-            private set { _printerStatus = value; OnPrinterStatusChange(_printerStatus); }
-        }
+        PrinterController printer;
+        CounterController counter;
 
-        LaserStatus _laserStatus;
-        public LaserStatus LaserStatus
+        HardwareStatus _status;
+        public HardwareStatus Status
         {
-            get { return _laserStatus; }
-            private set { _laserStatus = value; OnLaserStatusChange(_laserStatus); }
-        }
-
-        CounterStatus _counterStatus;
-        public CounterStatus CounterStatus
-        {
-            get { return _counterStatus; }
-            private set { _counterStatus = value; OnCounterStatusChange(_counterStatus); }
+            get { return _status; }
+            private set { _status = value; OnHardwareStatusChange(_status); }
         }
 
         Thread asyncControl;
 
         public void Initialize()
         {
-            PrinterStatus = PrinterStatus.Initializing;
-            LaserStatus = LaserStatus.Initializing;
-            CounterStatus = CounterStatus.Initializing;
+            Status = HardwareStatus.Initializing;
 
             asyncControl = new Thread(() =>
             {
-                Thread.Sleep(10000);
-                PrinterStatus = PrinterStatus.Idle;
-                LaserStatus = LaserStatus.Disabled;
-                CounterStatus = CounterStatus.Disabled;
+                try
+                {
+                    counter = new CounterController("COM5", 250000);
+                    counter.OnLogMessage += OnLogMessage;
+                }
+                catch (Exception)
+                {
+                    OnLogMessage("Failed to open counter port");
+                    Status = HardwareStatus.Error;
+                    return;
+                }
+
+                try
+                {
+                    printer = new PrinterController("COM3", 250000);
+                    printer.OnLogMessage += OnLogMessage;
+                }
+                catch (Exception)
+                {
+                    OnLogMessage("Failed to open printer port");
+                    Status = HardwareStatus.Error;
+                    return;
+                }
+
+                Status = HardwareStatus.Idle;
             });
 
             asyncControl.Start();
@@ -74,19 +78,47 @@ namespace DosimeterController
 
             asyncControl = new Thread(() =>
             {
-                OnLogMessage("Moving to start position.");
-                PrinterStatus = PrinterStatus.Moving;
-                Thread.Sleep(5000);
-                PrinterStatus = PrinterStatus.Idle;
-                OnLogMessage("Starting scan.");
-                PrinterStatus = PrinterStatus.Moving;
-                LaserStatus = LaserStatus.Enabled;
-                CounterStatus = CounterStatus.Enabled;
-                Thread.Sleep(5000);
-                OnLogMessage("Scan complete.");
-                PrinterStatus = PrinterStatus.Idle;
-                LaserStatus = LaserStatus.Disabled;
-                CounterStatus = CounterStatus.Disabled;
+                try
+                {
+
+                    OnLogMessage("Moving to start position.");
+                    Status = HardwareStatus.Homing;
+
+                    printer.MoveToPosition(100, 100, 0, 2000);
+                    counter.ZeroPositionCounter();
+
+                    Status = HardwareStatus.Scanning;
+                    OnLogMessage("Starting scan.");
+
+                    // Scan rows
+                    for (var i = 0; i < 10; i++)
+                    {
+                        counter.Start();
+                        printer.MoveDeltaX(30 * (i % 2 == 1 ? -1 : 1), 200);
+                        counter.Stop();
+
+                        // Read and save data to file
+
+                        printer.MoveDeltaY(1, 200);
+                    }
+
+                    OnLogMessage("Scan complete.");
+                    Status = HardwareStatus.Homing;
+                    printer.MoveToHome();
+
+                    Status = HardwareStatus.Idle;
+                }
+                catch (PrinterException e)
+                {
+                    OnLogMessage("Printer error: " + e.Message);
+                    Status = HardwareStatus.Error;
+                    // Turn off laser
+                }
+                catch (CounterException e)
+                {
+                    OnLogMessage("Counter error: " + e.Message);
+                    Status = HardwareStatus.Error;
+                }
             });
 
             asyncControl.Start();
