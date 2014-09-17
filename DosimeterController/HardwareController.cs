@@ -68,7 +68,7 @@ namespace DosimeterController
             asyncControl.Start();
         }
 
-        public void StartScan(float x1, float x2, float y1, float y2, float speed)
+        public void StartScan(decimal x, decimal y, decimal z, decimal width, decimal height, decimal rowHeight, decimal velocity)
         {
             if (asyncControl.IsAlive)
             {
@@ -76,30 +76,37 @@ namespace DosimeterController
                 return;
             }
 
+            if (Status == HardwareStatus.Error)
+            {
+                OnLogMessage("Hardware status is error. Aborting scan.");
+                return;
+            }
+
             asyncControl = new Thread(() =>
             {
                 try
                 {
+                    var rows = (int)Math.Ceiling(height / rowHeight);
 
                     OnLogMessage("Moving to start position.");
                     Status = HardwareStatus.Homing;
 
-                    printer.MoveToPosition(100, 100, 0, 2000);
+                    printer.MoveToPosition(x, y, z, 2000);
                     counter.ZeroPositionCounter();
 
                     Status = HardwareStatus.Scanning;
                     OnLogMessage("Starting scan.");
 
                     // Scan rows
-                    for (var i = 0; i < 10; i++)
+                    for (var i = 0; i < rows; i++)
                     {
                         counter.Start();
-                        printer.MoveDeltaX(30 * (i % 2 == 1 ? -1 : 1), 200);
+                        printer.MoveDeltaX(width * (i % 2 == 1 ? -1 : 1), velocity);
                         counter.Stop();
 
                         // Read and save data to file
 
-                        printer.MoveDeltaY(1, 200);
+                        printer.MoveDeltaY(rowHeight, velocity);
                     }
 
                     OnLogMessage("Scan complete.");

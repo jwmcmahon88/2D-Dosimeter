@@ -23,6 +23,7 @@ namespace DosimeterController
 
         public CounterController(string portName, int baud)
         {
+            return;
             port = new SerialPort(portName, baud);
             try
             {

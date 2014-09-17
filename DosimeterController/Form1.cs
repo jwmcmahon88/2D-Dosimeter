@@ -13,6 +13,7 @@ namespace DosimeterController
     public partial class Form1 : Form
     {
         readonly HardwareController controller = new HardwareController();
+        readonly Configuration configuration = new Configuration();
 
         public Form1()
         {
@@ -21,35 +22,99 @@ namespace DosimeterController
 
         void Form1_Load(object sender, EventArgs e)
         {
-            // Bind update events to the UI
+            // The controller may call these events from a separate thread,
+            // so they need to be marshalled back onto the UI thread
             controller.OnLogMessage += new LogMessageHandler(s => logText.Invoke((Action<string>)(ss => logText.AppendText(ss+"\n")), s));
-            controller.OnHardwareStatusChange += new HardwareStatusChangeDelegate(s => status.Invoke((Action)(() => UpdateStatusLabel(status, s))));
+            controller.OnHardwareStatusChange += new HardwareStatusChangeDelegate(s => status.Invoke((Action)(() => UpdateStatus(s))));
             controller.Initialize();
+
+            propertyGrid.SelectedObject = configuration;
         }
 
-        void UpdateStatusLabel(Label l, HardwareStatus s)
+        void UpdateStatus(HardwareStatus s)
         {
-            l.Text = s.ToString();
+            status.Text = s.ToString();
 
             switch (s)
             {
-                case HardwareStatus.Initializing: l.ForeColor = Color.Gray; break;
-                case HardwareStatus.Error: l.ForeColor = Color.Red; break;
-                case HardwareStatus.Idle: l.ForeColor = Color.Black; break;
-                case HardwareStatus.Homing: l.ForeColor = Color.Yellow; break;
-                case HardwareStatus.Scanning: l.ForeColor = Color.Green; break;
+                case HardwareStatus.Initializing:
+                    propertyGrid.Enabled = true;
+                    loadButton.Enabled = true;
+                    startButton.Enabled = false;
+                    startButton.Visible = true;
+                    reinitializeButton.Enabled = false;
+                    reinitializeButton.Visible = false;
+                    status.ForeColor = Color.Gray;
+                    break;
+                case HardwareStatus.Error:
+                    propertyGrid.Enabled = true;
+                    loadButton.Enabled = true;
+                    startButton.Enabled = false;
+                    startButton.Visible = false;
+                    reinitializeButton.Enabled = true;
+                    reinitializeButton.Visible = true;
+                    status.ForeColor = Color.Red;
+                    break;
+                case HardwareStatus.Idle:
+                    propertyGrid.Enabled = true;
+                    loadButton.Enabled = true;
+                    startButton.Enabled = true;
+                    startButton.Visible = true;
+                    reinitializeButton.Enabled = false;
+                    reinitializeButton.Visible = false;
+                    status.ForeColor = Color.Black;
+                    break;
+                case HardwareStatus.Homing:
+                    propertyGrid.Enabled = false;
+                    loadButton.Enabled = false;
+                    startButton.Enabled = false;
+                    startButton.Visible = true;
+                    reinitializeButton.Enabled = false;
+                    reinitializeButton.Visible = false;
+                    status.ForeColor = Color.Blue;
+                    break;
+                case HardwareStatus.Scanning:
+                    propertyGrid.Enabled = false;
+                    loadButton.Enabled = false;
+                    startButton.Enabled = false;
+                    startButton.Visible = true;
+                    reinitializeButton.Enabled = false;
+                    reinitializeButton.Visible = false;
+                    status.ForeColor = Color.Green; break;
             }
         }
 
         void StartButtonClicked(object sender, EventArgs e)
         {
-            logText.AppendText("Clicked start button\n");
-            controller.StartScan(0, 0, 0, 0, 0);
+            logText.AppendText("Clicked action button\n");
+
+            if (controller.Status != HardwareStatus.Idle)
+            {
+                logText.AppendText("Error: Start button was pressed when status was " + controller.Status.ToString());
+                return;
+            }
+
+            controller.StartScan(
+                configuration.Origin.X, configuration.Origin.Y,
+                configuration.FocusHeight,
+                configuration.Size.Width, configuration.Size.Height,
+                configuration.RowStride, configuration.RowSpeed
+            );
         }
 
         void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             controller.Shutdown();
+        }
+
+        private void LoadButtonClicked(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ReinitializeButtonClicked(object sender, EventArgs e)
+        {
+            controller.Initialize();
         }
     }
 }
