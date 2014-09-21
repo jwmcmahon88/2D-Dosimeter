@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace DosimeterController
 {
+    public enum CounterChannel { Primary = 0, Secondary = 1 }
+
     public class CounterException : Exception
     {
         public CounterException() { }
@@ -23,8 +25,12 @@ namespace DosimeterController
 
         public CounterController(string portName, int baud)
         {
-            return;
             port = new SerialPort(portName, baud);
+
+            // We expect near-immediate responses from the counter
+            port.ReadTimeout = 100;
+            port.WriteTimeout = 100;
+
             try
             {
                 port.Open();
@@ -41,43 +47,106 @@ namespace DosimeterController
         /// <summary>Enable the laser and start recording the pulse histogram.</summary>
         public void Start()
         {
-
+            ClearReadBuffer();
+            SendCheckedCommand("M1003");
         }
 
         /// <summary>Disable the laser and stop recording the pulse histogram.</summary>
         public void Stop()
         {
-
+            ClearReadBuffer();
+            SendCheckedCommand("M1004");
         }
 
         /// <summary>Read the specified histogram channel range.</summary>
-        public byte[] ReadHistogram(int minValue, int maxValue)
+        public ushort[] ReadHistogram(CounterChannel channel, int minValue, int maxValue)
         {
-            return new byte[0];
+            ClearReadBuffer();
+            SendCheckedCommand(string.Format("M1005 {0} {1} {2}", (int)channel, minValue, maxValue));
+
+            var data = ReadResponse();
+
+            var final = ReadResponse();
+            if (final != "ok")
+                throw new CounterException("Recieved unexpected response: " + final);
+
+            try
+            {
+                return data.Split(' ')
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Select(s => ushort.Parse(s))
+                    .ToArray();
+            }
+            catch (Exception e)
+            {
+                throw new CounterException("Recieved unexpected data: " + data + "\n\n" + e.Message);
+            }
         }
 
         /// <summary>Clear the pulse histogram.</summary>
         public void ResetHistogram()
         {
+            ClearReadBuffer();
+            SendCheckedCommand("M1006");
+        }
 
+        public uint ReadPositionCounter()
+        {
+            ClearReadBuffer();
+            SendCheckedCommand("M1001");
+
+            uint position;
+            var response = ReadResponse();
+            if (!uint.TryParse(response, out position))
+                throw new CounterException("Recieved unexpected response: " + response);
+
+            return position;
         }
 
         /// <summary>Set the current printer head position as the zero</summary>
         public void ZeroPositionCounter()
         {
-
+            ClearReadBuffer();
+            SendCheckedCommand("M1002");
         }
 
         /// <summary>
         /// Send a gcode string to the counter and wait for an "ok" response. Throws if a different response is recieved.
         /// </summary>
-        void SendCheckedCommand(string gcode)
+        void SendCheckedCommand(string command)
         {
-            Log("tx: " + gcode);
+            Log("ctx: " + command);
+            SendCommand(command);
+            var response = ReadResponse();
+            Log("crx: " + response);
+
+            if (response != "ok")
+                throw new CounterException("Recieved unexpected response: '" + response + "'");
+        }
+
+        /// <summary>
+        /// Send a command to the counter
+        /// </summary>
+        void SendCommand(string command)
+        {
+            try
+            {
+                port.WriteLine(command);
+            }
+            catch (Exception e)
+            {
+                throw new CounterException("I/O error: " + e);
+            }
+        }
+
+        /// <summary>
+        /// Read a response from the counter
+        /// </summary>
+        string ReadResponse()
+        {
             string response;
             try
             {
-                port.WriteLine(gcode);
                 response = port.ReadLine();
             }
             catch (Exception e)
@@ -86,8 +155,20 @@ namespace DosimeterController
             }
 
             Log("rx: " + response);
-            if (response != "ok")
-                throw new CounterException("Recieved unexpected response: " + response);
+
+            return response;
+        }
+
+        void ClearReadBuffer()
+        {
+            try
+            {
+                port.ReadExisting();
+            }
+            catch (Exception e)
+            {
+                throw new CounterException("I/O error: " + e);
+            }
         }
 
         void Log(string message)

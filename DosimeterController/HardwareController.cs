@@ -38,26 +38,28 @@ namespace DosimeterController
 
             asyncControl = new Thread(() =>
             {
+                var printerPort = "COM3";
+                var counterPort = "COM7";
                 try
                 {
-                    counter = new CounterController("COM5", 250000);
+                    counter = new CounterController(counterPort, 250000);
                     counter.OnLogMessage += OnLogMessage;
                 }
                 catch (Exception)
                 {
-                    OnLogMessage("Failed to open counter port");
+                    OnLogMessage("Failed to open counter on " + counterPort);
                     Status = HardwareStatus.Error;
                     return;
                 }
 
                 try
                 {
-                    printer = new PrinterController("COM3", 250000);
+                    printer = new PrinterController(printerPort, 250000);
                     printer.OnLogMessage += OnLogMessage;
                 }
                 catch (Exception)
                 {
-                    OnLogMessage("Failed to open printer port");
+                    OnLogMessage("Failed to open printer on " + printerPort);
                     Status = HardwareStatus.Error;
                     return;
                 }
@@ -105,7 +107,10 @@ namespace DosimeterController
                         counter.Stop();
 
                         // Read and save data to file
+                        var primary = counter.ReadHistogram(CounterChannel.Primary, 0, 100);
+                        OnLogMessage(string.Join(", ", primary));
 
+                        counter.ResetHistogram();
                         printer.MoveDeltaY(rowHeight, velocity);
                     }
 
