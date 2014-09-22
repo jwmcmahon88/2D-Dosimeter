@@ -40,6 +40,7 @@ namespace DosimeterController
             {
                 var printerPort = "COM3";
                 var counterPort = "COM7";
+
                 try
                 {
                     counter = new CounterController(counterPort, 250000);
@@ -88,9 +89,14 @@ namespace DosimeterController
             {
                 try
                 {
-                    var startColumn = 100;
-                    var endColumn = 300;
+                    // Add an additional overscan on each end
+                    var overscan = 1m; // in mm
+                    var xStepsPermm = 32;
 
+                    var startColumn = (int)((x - overscan) * xStepsPermm);
+                    var endColumn = (int)((x + width + overscan) * xStepsPermm);
+
+                    OnLogMessage(string.Format("Counter columns {0} to {1}", startColumn, endColumn));
                     var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "scan.fits");
                     var rows = (int)Math.Ceiling(height / rowHeight);
                     var columns = endColumn - startColumn + 1;
@@ -103,8 +109,10 @@ namespace DosimeterController
                         OnLogMessage("Moving to start position.");
                         Status = HardwareStatus.Homing;
 
-                        printer.MoveToPosition(x, y, z, 2000);
+                        printer.MoveToHome();
                         counter.ZeroPositionCounter();
+
+                        printer.MoveToPosition(x - overscan, y, z, 2000);
 
                         Status = HardwareStatus.Scanning;
                         OnLogMessage("Starting scan.");
@@ -112,10 +120,14 @@ namespace DosimeterController
                         // Scan rows
                         for (var i = 0; i < rows; i++)
                         {
+                            Thread.Sleep(10);
                             counter.Start();
-                            printer.MoveDeltaX(width * (i % 2 == 1 ? -1 : 1), velocity);
-                            counter.Stop();
+                            Thread.Sleep(10);
 
+                            printer.MoveDeltaX((width + 2 * overscan) * (i % 2 == 1 ? -1 : 1), velocity);
+                            Thread.Sleep(10);
+                            counter.Stop();
+                            Thread.Sleep(10);
                             // Read and save data to file
                             var primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);
                             OnLogMessage(string.Join(", ", primary));
@@ -142,12 +154,15 @@ namespace DosimeterController
                 {
                     OnLogMessage("Counter error: " + e.Message);
                     Status = HardwareStatus.Error;
+
+                    // Send emergency stop (M112)
                 }
                 catch (MiniFitsException e)
                 {
                     OnLogMessage("File error: " + e.Message);
                     Status = HardwareStatus.Error;
                     // Turn off laser and home printer
+                    // Send emergency stop (M112)
                 }
             });
 

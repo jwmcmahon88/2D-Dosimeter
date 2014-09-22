@@ -28,8 +28,8 @@ namespace DosimeterController
             port = new SerialPort(portName, baud);
 
             // We expect near-immediate responses from the counter
-            port.ReadTimeout = 100;
-            port.WriteTimeout = 100;
+//            port.ReadTimeout = 300;
+//            port.WriteTimeout = 300;
 
             try
             {
