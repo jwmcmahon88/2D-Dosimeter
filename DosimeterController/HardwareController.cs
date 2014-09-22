@@ -88,37 +88,49 @@ namespace DosimeterController
             {
                 try
                 {
+                    var startColumn = 100;
+                    var endColumn = 300;
+
+                    var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "scan.fits");
                     var rows = (int)Math.Ceiling(height / rowHeight);
+                    var columns = endColumn - startColumn + 1;
 
-                    OnLogMessage("Moving to start position.");
-                    Status = HardwareStatus.Homing;
-
-                    printer.MoveToPosition(x, y, z, 2000);
-                    counter.ZeroPositionCounter();
-
-                    Status = HardwareStatus.Scanning;
-                    OnLogMessage("Starting scan.");
-
-                    // Scan rows
-                    for (var i = 0; i < rows; i++)
+                    using (var fits = new MiniFits(dataPath, columns, rows, true))
                     {
-                        counter.Start();
-                        printer.MoveDeltaX(width * (i % 2 == 1 ? -1 : 1), velocity);
-                        counter.Stop();
+                        fits.UpdateKey("TESTKEY", "TESTVALUE", "TESTCOMMENT");
+                        var data = new ushort[rows * columns];
 
-                        // Read and save data to file
-                        var primary = counter.ReadHistogram(CounterChannel.Primary, 0, 100);
-                        OnLogMessage(string.Join(", ", primary));
+                        OnLogMessage("Moving to start position.");
+                        Status = HardwareStatus.Homing;
 
-                        counter.ResetHistogram();
-                        printer.MoveDeltaY(rowHeight, velocity);
+                        printer.MoveToPosition(x, y, z, 2000);
+                        counter.ZeroPositionCounter();
+
+                        Status = HardwareStatus.Scanning;
+                        OnLogMessage("Starting scan.");
+
+                        // Scan rows
+                        for (var i = 0; i < rows; i++)
+                        {
+                            counter.Start();
+                            printer.MoveDeltaX(width * (i % 2 == 1 ? -1 : 1), velocity);
+                            counter.Stop();
+
+                            // Read and save data to file
+                            var primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);
+                            OnLogMessage(string.Join(", ", primary));
+
+                            fits.SetImageRow(i, primary);
+                            counter.ResetHistogram();
+                            printer.MoveDeltaY(rowHeight, velocity);
+                        }
+
+                        OnLogMessage("Scan complete.");
+                        Status = HardwareStatus.Homing;
+                        printer.MoveToHome();
+
+                        Status = HardwareStatus.Idle;
                     }
-
-                    OnLogMessage("Scan complete.");
-                    Status = HardwareStatus.Homing;
-                    printer.MoveToHome();
-
-                    Status = HardwareStatus.Idle;
                 }
                 catch (PrinterException e)
                 {
@@ -130,6 +142,12 @@ namespace DosimeterController
                 {
                     OnLogMessage("Counter error: " + e.Message);
                     Status = HardwareStatus.Error;
+                }
+                catch (MiniFitsException e)
+                {
+                    OnLogMessage("File error: " + e.Message);
+                    Status = HardwareStatus.Error;
+                    // Turn off laser and home printer
                 }
             });
 
