@@ -102,9 +102,9 @@ namespace DosimeterController
 
                     using (var fits = new MiniFits(config.DataFile, columns, rows, true))
                     {
-                        fits.UpdateKey("OPERATOR", config.Operator, "T");
+                        fits.UpdateKey("OPERATOR", config.Operator, null);
                         fits.UpdateKey("DATETIME", DateTime.Now.ToString("G"), "Time at the start of the scan");
-                        fits.UpdateKey("TEST", "this is a string that has more than 68 characters. this is a string that has more than 68 characters. this is a string that has more than 68 characters. this is a string that has more than 68 characters.", "test");
+                        fits.UpdateKey("DESCRIPT", config.Description, null);
                         fits.UpdateKey("SCANAREA", string.Format("{0:F2} {1:F2} {2:F2} {3:F2}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
                         fits.UpdateKey("ROWSTART", startColumn, "The step count of the first data column");
                         fits.UpdateKey("ROWSTRID", config.RowStride, "The step size between rows (in mm)");
@@ -126,14 +126,10 @@ namespace DosimeterController
                         // Scan rows
                         for (var i = 0; i < rows; i++)
                         {
-                            Thread.Sleep(10);
+                            OnLogMessage(string.Format("Scanning row {0} of {1} ({2:F0}%)", i + 1, rows, i * 100 / rows));
                             counter.Start();
-                            Thread.Sleep(10);
-
                             printer.MoveDeltaX((config.Size.Width + 2 * overscan) * (i % 2 == 1 ? -1 : 1), config.RowSpeed);
-                            Thread.Sleep(10);
                             counter.Stop();
-                            Thread.Sleep(10);
 
                             // Read and save data to file
                             var primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);

@@ -86,7 +86,6 @@ namespace DosimeterController
         /// </summary>
         void SendCheckedCommand(string gcode)
         {
-            Log("tx: " + gcode);
             string response;
             try
             {
@@ -98,7 +97,6 @@ namespace DosimeterController
                 throw new PrinterException("I/O error: " + e);
             }
 
-            Log("rx: " + response);
             if (response != "ok")
                 throw new PrinterException("Recieved unexpected response: " + response);
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,7 +40,6 @@ namespace DosimeterController
             {
                 case HardwareStatus.Initializing:
                     propertyGrid.Enabled = true;
-                    loadButton.Enabled = true;
                     startButton.Enabled = false;
                     startButton.Visible = true;
                     reinitializeButton.Enabled = false;
@@ -48,7 +48,6 @@ namespace DosimeterController
                     break;
                 case HardwareStatus.Error:
                     propertyGrid.Enabled = true;
-                    loadButton.Enabled = true;
                     startButton.Enabled = false;
                     startButton.Visible = false;
                     reinitializeButton.Enabled = true;
@@ -57,7 +56,6 @@ namespace DosimeterController
                     break;
                 case HardwareStatus.Idle:
                     propertyGrid.Enabled = true;
-                    loadButton.Enabled = true;
                     startButton.Enabled = true;
                     startButton.Visible = true;
                     reinitializeButton.Enabled = false;
@@ -66,7 +64,6 @@ namespace DosimeterController
                     break;
                 case HardwareStatus.Homing:
                     propertyGrid.Enabled = false;
-                    loadButton.Enabled = false;
                     startButton.Enabled = false;
                     startButton.Visible = true;
                     reinitializeButton.Enabled = false;
@@ -75,7 +72,6 @@ namespace DosimeterController
                     break;
                 case HardwareStatus.Scanning:
                     propertyGrid.Enabled = false;
-                    loadButton.Enabled = false;
                     startButton.Enabled = false;
                     startButton.Visible = true;
                     reinitializeButton.Enabled = false;
@@ -94,6 +90,26 @@ namespace DosimeterController
                 return;
             }
 
+            if (File.Exists(configuration.DataFile))
+            {
+                var confirmOverwrite = MessageBox.Show(string.Format("Are you sure you want to overwrite {0}?", Path.GetFileName(configuration.DataFile)), "File exists", MessageBoxButtons.YesNo);
+                if (confirmOverwrite == DialogResult.No)
+                {
+                    logText.AppendText("Error: User aborted scan.");
+                    return;
+                }
+
+                try
+                {
+                    File.Delete(configuration.DataFile);
+                }
+                catch
+                {
+                    logText.AppendText("Error: Unable to delete existing file. Is it open in another program?");
+                    return;
+                }
+            }
+
             controller.StartScan(configuration);
         }
 
@@ -102,12 +118,7 @@ namespace DosimeterController
             controller.Shutdown();
         }
 
-        private void LoadButtonClicked(object sender, EventArgs e)
-        {
-
-        }
-
-        private void ReinitializeButtonClicked(object sender, EventArgs e)
+        void ReinitializeButtonClicked(object sender, EventArgs e)
         {
             controller.Initialize();
         }

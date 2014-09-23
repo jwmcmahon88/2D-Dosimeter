@@ -27,10 +27,6 @@ namespace DosimeterController
         {
             port = new SerialPort(portName, baud);
 
-            // We expect near-immediate responses from the counter
-//            port.ReadTimeout = 300;
-//            port.WriteTimeout = 300;
-
             try
             {
                 port.Open();
@@ -115,10 +111,8 @@ namespace DosimeterController
         /// </summary>
         void SendCheckedCommand(string command)
         {
-            Log("ctx: " + command);
             SendCommand(command);
             var response = ReadResponse();
-            Log("crx: " + response);
 
             if (response != "ok")
                 throw new CounterException("Recieved unexpected response: '" + response + "'");
@@ -153,8 +147,6 @@ namespace DosimeterController
             {
                 throw new CounterException("I/O error: " + e);
             }
-
-            Log("rx: " + response);
 
             return response;
         }

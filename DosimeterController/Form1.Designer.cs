@@ -33,7 +33,6 @@
             this.label9 = new System.Windows.Forms.Label();
             this.logText = new System.Windows.Forms.TextBox();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
-            this.loadButton = new System.Windows.Forms.Button();
             this.reinitializeButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
@@ -52,7 +51,7 @@
             this.status.AutoSize = true;
             this.status.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.status.ForeColor = System.Drawing.Color.Maroon;
-            this.status.Location = new System.Drawing.Point(144, 286);
+            this.status.Location = new System.Drawing.Point(55, 286);
             this.status.Name = "status";
             this.status.Size = new System.Drawing.Size(53, 13);
             this.status.TabIndex = 1;
@@ -61,7 +60,7 @@
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(98, 286);
+            this.label9.Location = new System.Drawing.Point(9, 286);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(40, 13);
             this.label9.TabIndex = 0;
@@ -86,16 +85,6 @@
             this.propertyGrid.TabIndex = 11;
             this.propertyGrid.ToolbarVisible = false;
             // 
-            // loadButton
-            // 
-            this.loadButton.Location = new System.Drawing.Point(12, 281);
-            this.loadButton.Name = "loadButton";
-            this.loadButton.Size = new System.Drawing.Size(75, 23);
-            this.loadButton.TabIndex = 12;
-            this.loadButton.Text = "Load";
-            this.loadButton.UseVisualStyleBackColor = true;
-            this.loadButton.Click += new System.EventHandler(this.LoadButtonClicked);
-            // 
             // reinitializeButton
             // 
             this.reinitializeButton.Location = new System.Drawing.Point(212, 281);
@@ -112,7 +101,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(555, 316);
             this.Controls.Add(this.reinitializeButton);
-            this.Controls.Add(this.loadButton);
             this.Controls.Add(this.propertyGrid);
             this.Controls.Add(this.status);
             this.Controls.Add(this.logText);
@@ -136,7 +124,6 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.TextBox logText;
         private System.Windows.Forms.PropertyGrid propertyGrid;
-        private System.Windows.Forms.Button loadButton;
         private System.Windows.Forms.Button reinitializeButton;
 
     }
