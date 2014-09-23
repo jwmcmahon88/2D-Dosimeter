@@ -22,8 +22,18 @@ namespace DosimeterController
         [DllImport(FITS_DLL, EntryPoint = "ffcrim", CallingConvention = FITS_CALLING_CONVENTION)]
         static extern int CreateImage(IntPtr fptr, int bitpix, int naxis, int[] naxes, ref int status);
 
+        // long string version
+        [DllImport(FITS_DLL, EntryPoint = "ffukls", CallingConvention = FITS_CALLING_CONVENTION)]
+        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, [MarshalAs(UnmanagedType.LPStr)] string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+
+        [DllImport(FITS_DLL, EntryPoint = "ffukyl", CallingConvention = FITS_CALLING_CONVENTION)]
+        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, int value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+
+        [DllImport(FITS_DLL, EntryPoint = "ffukyd", CallingConvention = FITS_CALLING_CONVENTION)]
+        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, double value, int places, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+
         [DllImport(FITS_DLL, EntryPoint = "ffuky", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int UpdateKey(IntPtr fptr, int datatype, [MarshalAs(UnmanagedType.LPStr)] string keyname, [MarshalAs(UnmanagedType.LPStr)] string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+        static extern unsafe int UpdateKey(IntPtr fptr, int datatype, [MarshalAs(UnmanagedType.LPStr)] string keyname, void* value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
         [DllImport(FITS_DLL, EntryPoint = "ffppr", CallingConvention = FITS_CALLING_CONVENTION)]
         static extern int WriteImage(IntPtr fptr, int datatype, long firstelem, long nelem, ushort[] array, ref int status);
@@ -54,7 +64,24 @@ namespace DosimeterController
 
         public void UpdateKey(string key, string value, string comment)
         {
-            UpdateKey(fptr, 16, key, value, comment, ref status);
+            UpdateKey(fptr, key, value, comment, ref status);
+            if (status != 0)
+                throw new MiniFitsException("Failed to update key");
+        }
+
+        public void UpdateKey(string key, int value, string comment)
+        {
+            UpdateKey(fptr, key, value, comment, ref status);
+
+            if (status != 0)
+                throw new MiniFitsException("Failed to update key");
+        }
+
+        public void UpdateKey(string key, decimal value, string comment)
+        {
+           var val = (double)value;
+           UpdateKey(fptr, key, val, 2, comment, ref status);
+
             if (status != 0)
                 throw new MiniFitsException("Failed to update key");
         }

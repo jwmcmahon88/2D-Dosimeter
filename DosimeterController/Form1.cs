@@ -94,12 +94,7 @@ namespace DosimeterController
                 return;
             }
 
-            controller.StartScan(
-                configuration.Origin.X, configuration.Origin.Y,
-                configuration.FocusHeight,
-                configuration.Size.Width, configuration.Size.Height,
-                configuration.RowStride, configuration.RowSpeed
-            );
+            controller.StartScan(configuration);
         }
 
         void Form1_FormClosing(object sender, FormClosingEventArgs e)

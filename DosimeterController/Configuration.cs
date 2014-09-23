@@ -5,9 +5,11 @@ using System.ComponentModel.Design;
 using System.Drawing;
 using System.Drawing.Design;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace DosimeterController
 {
@@ -46,6 +48,10 @@ namespace DosimeterController
         [Editor(typeof(MultilineStringEditor), typeof(UITypeEditor))]
         public string Description { get; set; }
 
+        [Description("Data file that is saved to disk")]
+        [EditorAttribute(typeof(SaveFileNameEditor), typeof(UITypeEditor))]
+        public string DataFile { get; set; }
+
         public Configuration()
         {
             // Set the default values
@@ -57,6 +63,7 @@ namespace DosimeterController
             Film = "None";
             Operator = "Paul Chote";
             Description = "Test scan";
+            DataFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "scan.fits");
         }
     }
 
@@ -199,6 +206,37 @@ namespace DosimeterController
         public override bool GetPropertiesSupported(ITypeDescriptorContext context)
         {
             return true;
+        }
+    }
+
+    public class SaveFileNameEditor : UITypeEditor
+    {
+        public override UITypeEditorEditStyle GetEditStyle(ITypeDescriptorContext context)
+        {
+            return UITypeEditorEditStyle.Modal;
+        }
+
+        public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
+        {
+            if (context == null || context.Instance == null || provider == null)
+                return base.EditValue(context, provider, value);
+
+            using (var dialog = new SaveFileDialog())
+            {
+                if (value != null)
+                {
+                    var path = (string)value;
+                    dialog.InitialDirectory = Path.GetDirectoryName(path);
+                    dialog.FileName = Path.GetFileName(path);
+                }
+
+                dialog.Title = context.PropertyDescriptor.DisplayName;
+                dialog.Filter = "Fits image (*.fits)|*.fits|Compressed fits image (*.fits.gz)|*.fits.gz";
+                if (dialog.ShowDialog() == DialogResult.OK)
+                    value = dialog.FileName;
+            }
+
+            return value;
         }
     }
 }

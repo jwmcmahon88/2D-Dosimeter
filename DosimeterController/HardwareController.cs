@@ -71,7 +71,7 @@ namespace DosimeterController
             asyncControl.Start();
         }
 
-        public void StartScan(decimal x, decimal y, decimal z, decimal width, decimal height, decimal rowHeight, decimal velocity)
+        public void StartScan(Configuration config)
         {
             if (asyncControl.IsAlive)
             {
@@ -93,17 +93,23 @@ namespace DosimeterController
                     var overscan = 1m; // in mm
                     var xStepsPermm = 32;
 
-                    var startColumn = (int)((x - overscan) * xStepsPermm);
-                    var endColumn = (int)((x + width + overscan) * xStepsPermm);
+                    var startColumn = (int)((config.Origin.X - overscan) * xStepsPermm);
+                    var endColumn = (int)((config.Origin.X + config.Size.Width + overscan) * xStepsPermm);
 
                     OnLogMessage(string.Format("Counter columns {0} to {1}", startColumn, endColumn));
-                    var dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "scan.fits");
-                    var rows = (int)Math.Ceiling(height / rowHeight);
+                    var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
                     var columns = endColumn - startColumn + 1;
 
-                    using (var fits = new MiniFits(dataPath, columns, rows, true))
+                    using (var fits = new MiniFits(config.DataFile, columns, rows, true))
                     {
-                        fits.UpdateKey("TESTKEY", "TESTVALUE", "TESTCOMMENT");
+                        fits.UpdateKey("OPERATOR", config.Operator, "T");
+                        fits.UpdateKey("DATETIME", DateTime.Now.ToString("G"), "Time at the start of the scan");
+                        fits.UpdateKey("TEST", "this is a string that has more than 68 characters. this is a string that has more than 68 characters. this is a string that has more than 68 characters. this is a string that has more than 68 characters.", "test");
+                        fits.UpdateKey("SCANAREA", string.Format("{0:F2} {1:F2} {2:F2} {3:F2}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
+                        fits.UpdateKey("ROWSTART", startColumn, "The step count of the first data column");
+                        fits.UpdateKey("ROWSTRID", config.RowStride, "The step size between rows (in mm)");
+                        fits.UpdateKey("ROWSPEED", config.RowSpeed, "The row scan speed (in mm/minute)");
+
                         var data = new ushort[rows * columns];
 
                         OnLogMessage("Moving to start position.");
@@ -112,7 +118,7 @@ namespace DosimeterController
                         printer.MoveToHome();
                         counter.ZeroPositionCounter();
 
-                        printer.MoveToPosition(x - overscan, y, z, 2000);
+                        printer.MoveToPosition(config.Origin.X - overscan, config.Origin.Y, config.FocusHeight, 2000);
 
                         Status = HardwareStatus.Scanning;
                         OnLogMessage("Starting scan.");
@@ -124,17 +130,17 @@ namespace DosimeterController
                             counter.Start();
                             Thread.Sleep(10);
 
-                            printer.MoveDeltaX((width + 2 * overscan) * (i % 2 == 1 ? -1 : 1), velocity);
+                            printer.MoveDeltaX((config.Size.Width + 2 * overscan) * (i % 2 == 1 ? -1 : 1), config.RowSpeed);
                             Thread.Sleep(10);
                             counter.Stop();
                             Thread.Sleep(10);
+
                             // Read and save data to file
                             var primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);
-                            OnLogMessage(string.Join(", ", primary));
 
                             fits.SetImageRow(i, primary);
                             counter.ResetHistogram();
-                            printer.MoveDeltaY(rowHeight, velocity);
+                            printer.MoveDeltaY(config.RowStride, config.RowSpeed);
                         }
 
                         OnLogMessage("Scan complete.");
