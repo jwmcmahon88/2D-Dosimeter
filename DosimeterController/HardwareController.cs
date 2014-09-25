@@ -12,29 +12,30 @@ namespace DosimeterController
     public enum HardwareStatus { Initializing, Idle, Homing, Scanning, Error }
 
     public delegate void LogMessageHandler(string message);
-    public delegate void HardwareStatusChangeDelegate(HardwareStatus status);
+    public delegate void HardwareStatusChangeDelegate(HardwareStatus status, decimal scanPercentage);
 
     public class HardwareController
     {
         // Public bindings
-        public event HardwareStatusChangeDelegate OnHardwareStatusChange = _ => {};
+        public event HardwareStatusChangeDelegate OnHardwareStatusChange = (a, b) => {};
         public event LogMessageHandler OnLogMessage = _ => {};
 
         PrinterController printer;
         CounterController counter;
 
-        HardwareStatus _status;
-        public HardwareStatus Status
+        public HardwareStatus Status { get; private set; }
+
+        void UpdateStatus(HardwareStatus status, decimal scanPercentage = 0)
         {
-            get { return _status; }
-            private set { _status = value; OnHardwareStatusChange(_status); }
+            Status = status;
+            OnHardwareStatusChange(status, scanPercentage);
         }
 
         Thread asyncControl;
 
         public void Initialize()
         {
-            Status = HardwareStatus.Initializing;
+            UpdateStatus(HardwareStatus.Initializing);
 
             asyncControl = new Thread(() =>
             {
@@ -49,7 +50,7 @@ namespace DosimeterController
                 catch (Exception)
                 {
                     OnLogMessage("Failed to open counter on " + counterPort);
-                    Status = HardwareStatus.Error;
+                    UpdateStatus(HardwareStatus.Error);
                     return;
                 }
 
@@ -61,11 +62,11 @@ namespace DosimeterController
                 catch (Exception)
                 {
                     OnLogMessage("Failed to open printer on " + printerPort);
-                    Status = HardwareStatus.Error;
+                    UpdateStatus(HardwareStatus.Error);
                     return;
                 }
 
-                Status = HardwareStatus.Idle;
+                UpdateStatus(HardwareStatus.Idle);
             });
 
             asyncControl.Start();
@@ -115,14 +116,14 @@ namespace DosimeterController
                         var data = new ushort[rows * columns];
 
                         OnLogMessage("Moving to start position.");
-                        Status = HardwareStatus.Homing;
+                        UpdateStatus(HardwareStatus.Homing);
 
                         printer.MoveToHome();
                         counter.ZeroPositionCounter();
 
                         printer.MoveToPosition(config.Origin.X - overscan, config.Origin.Y, config.FocusHeight, 2000);
 
-                        Status = HardwareStatus.Scanning;
+                        UpdateStatus(HardwareStatus.Scanning);
                         OnLogMessage("Starting scan.");
 
                         // Scan rows
@@ -143,33 +144,34 @@ namespace DosimeterController
                             fits.SetImageRow(1, i, secondary);
 
                             counter.ResetHistogram();
+                            UpdateStatus(HardwareStatus.Scanning, i * 100m / rows);
                             printer.MoveDeltaY(config.RowStride, config.ColumnSpeed);
                         }
 
                         OnLogMessage("Scan complete.");
-                        Status = HardwareStatus.Homing;
+                        UpdateStatus(HardwareStatus.Homing);
                         printer.MoveToHome();
 
-                        Status = HardwareStatus.Idle;
+                        UpdateStatus(HardwareStatus.Idle);
                     }
                 }
                 catch (PrinterException e)
                 {
                     OnLogMessage("Printer error: " + e.Message);
-                    Status = HardwareStatus.Error;
+                    UpdateStatus(HardwareStatus.Error);
                     // Turn off laser
                 }
                 catch (CounterException e)
                 {
                     OnLogMessage("Counter error: " + e.Message);
-                    Status = HardwareStatus.Error;
+                    UpdateStatus(HardwareStatus.Error);
 
                     // Send emergency stop (M112)
                 }
                 catch (MiniFitsException e)
                 {
                     OnLogMessage("File error: " + e.Message);
-                    Status = HardwareStatus.Error;
+                    UpdateStatus(HardwareStatus.Error);
                     // Turn off laser and home printer
                     // Send emergency stop (M112)
                 }

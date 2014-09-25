@@ -26,15 +26,18 @@ namespace DosimeterController
             // The controller may call these events from a separate thread,
             // so they need to be marshalled back onto the UI thread
             controller.OnLogMessage += new LogMessageHandler(s => logText.Invoke((Action<string>)(ss => logText.AppendText(ss+"\n")), s));
-            controller.OnHardwareStatusChange += new HardwareStatusChangeDelegate(s => status.Invoke((Action)(() => UpdateStatus(s))));
+            controller.OnHardwareStatusChange += new HardwareStatusChangeDelegate((s, p) => status.Invoke((Action)(() => UpdateStatus(s, p))));
             controller.Initialize();
 
             propertyGrid.SelectedObject = configuration;
         }
 
-        void UpdateStatus(HardwareStatus s)
+        void UpdateStatus(HardwareStatus s, decimal percentage)
         {
-            status.Text = s.ToString();
+            if (percentage > 0)
+                status.Text = string.Format("{0} ({1:F0}% complete)", s, percentage);
+            else
+                status.Text = s.ToString();
 
             switch (s)
             {
