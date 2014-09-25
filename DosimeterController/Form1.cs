@@ -45,6 +45,8 @@ namespace DosimeterController
                     propertyGrid.Enabled = true;
                     startButton.Enabled = false;
                     startButton.Visible = true;
+                    stopButton.Enabled = false;
+                    stopButton.Visible = false;
                     reinitializeButton.Enabled = false;
                     reinitializeButton.Visible = false;
                     status.ForeColor = Color.Gray;
@@ -53,6 +55,8 @@ namespace DosimeterController
                     propertyGrid.Enabled = true;
                     startButton.Enabled = false;
                     startButton.Visible = false;
+                    stopButton.Enabled = false;
+                    stopButton.Visible = false;
                     reinitializeButton.Enabled = true;
                     reinitializeButton.Visible = true;
                     status.ForeColor = Color.Red;
@@ -61,6 +65,8 @@ namespace DosimeterController
                     propertyGrid.Enabled = true;
                     startButton.Enabled = true;
                     startButton.Visible = true;
+                    stopButton.Enabled = false;
+                    stopButton.Visible = false;
                     reinitializeButton.Enabled = false;
                     reinitializeButton.Visible = false;
                     status.ForeColor = Color.Black;
@@ -68,7 +74,9 @@ namespace DosimeterController
                 case HardwareStatus.Homing:
                     propertyGrid.Enabled = false;
                     startButton.Enabled = false;
-                    startButton.Visible = true;
+                    startButton.Visible = false;
+                    stopButton.Enabled = false;
+                    stopButton.Visible = true;
                     reinitializeButton.Enabled = false;
                     reinitializeButton.Visible = false;
                     status.ForeColor = Color.Blue;
@@ -76,7 +84,9 @@ namespace DosimeterController
                 case HardwareStatus.Scanning:
                     propertyGrid.Enabled = false;
                     startButton.Enabled = false;
-                    startButton.Visible = true;
+                    startButton.Visible = false;
+                    stopButton.Enabled = true;
+                    stopButton.Visible = true;
                     reinitializeButton.Enabled = false;
                     reinitializeButton.Visible = false;
                     status.ForeColor = Color.Green; break;
@@ -118,12 +128,19 @@ namespace DosimeterController
 
         void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            controller.Shutdown();
+            controller.CancelScan();
         }
 
         void ReinitializeButtonClicked(object sender, EventArgs e)
         {
             controller.Initialize();
+        }
+
+        void StopButtonClicked(object sender, EventArgs e)
+        {
+            logText.AppendText("Aborting scan.\n");
+            stopButton.Enabled = false;
+            controller.CancelScan();
         }
     }
 }

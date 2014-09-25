@@ -19,11 +19,12 @@ namespace DosimeterController
         // Public bindings
         public event HardwareStatusChangeDelegate OnHardwareStatusChange = (a, b) => {};
         public event LogMessageHandler OnLogMessage = _ => {};
+        public HardwareStatus Status { get; private set; }
 
         PrinterController printer;
         CounterController counter;
 
-        public HardwareStatus Status { get; private set; }
+        bool cancelScan;
 
         void UpdateStatus(HardwareStatus status, decimal scanPercentage = 0)
         {
@@ -86,6 +87,8 @@ namespace DosimeterController
                 return;
             }
 
+            cancelScan = false;
+
             asyncControl = new Thread(() =>
             {
                 try
@@ -125,6 +128,9 @@ namespace DosimeterController
                         // Scan rows
                         for (var i = 0; i < rows; i++)
                         {
+                            if (cancelScan)
+                                break;
+
                             OnLogMessage(string.Format("Scanning row {0} of {1} ({2:F0}%)", i + 1, rows, i * 100 / rows));
                             counter.Start();
                             printer.MoveDeltaX((config.Size.Width + 2 * config.RowOverscan) * (i % 2 == 1 ? -1 : 1), config.RowSpeed);
@@ -176,12 +182,9 @@ namespace DosimeterController
             asyncControl.Start();
         }
 
-        public void Shutdown()
+        public void CancelScan()
         {
-            asyncControl.Abort();
-
-            // TODO: Send homing command
-            // TODO: Disable laser and counter
+            cancelScan = true;
         }
     }
 }

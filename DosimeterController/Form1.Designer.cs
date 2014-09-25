@@ -34,6 +34,7 @@
             this.logText = new System.Windows.Forms.TextBox();
             this.propertyGrid = new System.Windows.Forms.PropertyGrid();
             this.reinitializeButton = new System.Windows.Forms.Button();
+            this.stopButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // startButton
@@ -95,11 +96,22 @@
             this.reinitializeButton.UseVisualStyleBackColor = true;
             this.reinitializeButton.Click += new System.EventHandler(this.ReinitializeButtonClicked);
             // 
+            // stopButton
+            // 
+            this.stopButton.Location = new System.Drawing.Point(212, 281);
+            this.stopButton.Name = "stopButton";
+            this.stopButton.Size = new System.Drawing.Size(75, 23);
+            this.stopButton.TabIndex = 14;
+            this.stopButton.Text = "Stop";
+            this.stopButton.UseVisualStyleBackColor = true;
+            this.stopButton.Click += new System.EventHandler(this.StopButtonClicked);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(555, 316);
+            this.Controls.Add(this.stopButton);
             this.Controls.Add(this.reinitializeButton);
             this.Controls.Add(this.propertyGrid);
             this.Controls.Add(this.status);
@@ -125,6 +137,7 @@
         private System.Windows.Forms.TextBox logText;
         private System.Windows.Forms.PropertyGrid propertyGrid;
         private System.Windows.Forms.Button reinitializeButton;
+        private System.Windows.Forms.Button stopButton;
 
     }
 }
