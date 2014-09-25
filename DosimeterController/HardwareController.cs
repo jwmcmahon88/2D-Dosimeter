@@ -100,15 +100,17 @@ namespace DosimeterController
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
                     var columns = endColumn - startColumn + 1;
 
-                    using (var fits = new MiniFits(config.DataFile, columns, rows, true))
+                    using (var fits = new MiniFits(config.DataFile, columns, rows, 2, true))
                     {
                         fits.UpdateKey("OPERATOR", config.Operator, null);
                         fits.UpdateKey("DATETIME", DateTime.Now.ToString("G"), "Time at the start of the scan");
                         fits.UpdateKey("DESCRIPT", config.Description, null);
-                        fits.UpdateKey("SCANAREA", string.Format("{0:F2} {1:F2} {2:F2} {3:F2}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
+                        fits.UpdateKey("SCANAREA", string.Format("{0:F3} {1:F3} {2:F3} {3:F3}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
                         fits.UpdateKey("ROWSTART", startColumn, "The step count of the first data column");
-                        fits.UpdateKey("ROWSTRID", config.RowStride, "The step size between rows (in mm)");
-                        fits.UpdateKey("ROWSPEED", config.RowSpeed, "The row scan speed (in mm/minute)");
+                        fits.UpdateKey("ROWSTRID", config.RowStride, 6, "The step size between rows (in mm)");
+                        fits.UpdateKey("ROWSPEED", config.RowSpeed, 4, "The row scan speed (in mm/minute)");
+                        fits.UpdateKey("COLSTRID", config.ColumnStride, 6, "The step size between columns (in mm)");
+                        fits.UpdateKey("COLSPEED", config.ColumnSpeed, 4, "The row-change speed (in mm/minute)");
 
                         var data = new ushort[rows * columns];
 
@@ -133,10 +135,15 @@ namespace DosimeterController
 
                             // Read and save data to file
                             var primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);
+                            var secondary = counter.ReadHistogram(CounterChannel.Secondary, startColumn, endColumn);
 
-                            fits.SetImageRow(i, primary);
+                            OnLogMessage(string.Join(" ", primary));
+
+                            fits.SetImageRow(0, i, primary);
+                            fits.SetImageRow(1, i, secondary);
+
                             counter.ResetHistogram();
-                            printer.MoveDeltaY(config.RowStride, config.RowSpeed);
+                            printer.MoveDeltaY(config.RowStride, config.ColumnSpeed);
                         }
 
                         OnLogMessage("Scan complete.");

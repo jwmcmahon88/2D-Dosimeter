@@ -26,10 +26,10 @@ namespace DosimeterController
         [DllImport(FITS_DLL, EntryPoint = "ffukls", CallingConvention = FITS_CALLING_CONVENTION)]
         static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, [MarshalAs(UnmanagedType.LPStr)] string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffukyl", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, int value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+        [DllImport(FITS_DLL, EntryPoint = "ffukyj", CallingConvention = FITS_CALLING_CONVENTION)]
+        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, long value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffukyd", CallingConvention = FITS_CALLING_CONVENTION)]
+        [DllImport(FITS_DLL, EntryPoint = "ffukyg", CallingConvention = FITS_CALLING_CONVENTION)]
         static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, double value, int places, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
         [DllImport(FITS_DLL, EntryPoint = "ffuky", CallingConvention = FITS_CALLING_CONVENTION)]
@@ -42,11 +42,11 @@ namespace DosimeterController
         public static extern int CloseFile(IntPtr fptr, ref int status);
 
         readonly IntPtr fptr;
-        readonly int width, height;
+        readonly int width, height, planes;
         readonly ushort[] data;
         int status;
 
-        public MiniFits(string filename, int width, int height, bool overwrite)
+        public MiniFits(string filename, int width, int height, int planes, bool overwrite)
         {
             if (overwrite)
                 filename = "!" + filename;
@@ -54,14 +54,16 @@ namespace DosimeterController
             if (MiniFits.CreateFile(ref fptr, filename, ref status) != 0)
                 throw new MiniFitsException("Failed to create file");
 
-            if (MiniFits.CreateImage(fptr, 20, 2, new int[] { width, height }, ref status) != 0)
+            if (MiniFits.CreateImage(fptr, 20, 3, new int[] { width, height, planes }, ref status) != 0)
                 throw new MiniFitsException("Failed to create image");
 
-            data = new ushort[width * height];
+            data = new ushort[width * height * planes];
             this.width = width;
             this.height = height;
+            this.planes = planes;
         }
 
+        /// <summary>Add or update a header keyword.</summary>
         public void UpdateKey(string key, string value, string comment)
         {
             UpdateKey(fptr, key, value, comment, ref status);
@@ -69,6 +71,7 @@ namespace DosimeterController
                 throw new MiniFitsException("Failed to update key");
         }
 
+        /// <summary>Add or update a header keyword.</summary>
         public void UpdateKey(string key, int value, string comment)
         {
             UpdateKey(fptr, key, value, comment, ref status);
@@ -77,16 +80,18 @@ namespace DosimeterController
                 throw new MiniFitsException("Failed to update key");
         }
 
-        public void UpdateKey(string key, decimal value, string comment)
+        /// <summary>Add or update a header keyword.</summary>
+        public void UpdateKey(string key, decimal value, int significantFigures, string comment)
         {
            var val = (double)value;
-           UpdateKey(fptr, key, val, 2, comment, ref status);
+           UpdateKey(fptr, key, val, significantFigures - 1, comment, ref status);
 
             if (status != 0)
                 throw new MiniFitsException("Failed to update key");
         }
 
-        public void SetImageRow(int row, ushort[] rowData)
+        /// <summary>Set row data in a specified plane.</summary>
+        public void SetImageRow(int plane, int row, ushort[] rowData)
         {
             if (rowData.Length != width)
                 throw new MiniFitsException(string.Format("rowData length ({0}) doesn't match image width ({1})", rowData.Length, width));
@@ -94,7 +99,11 @@ namespace DosimeterController
             if (row < 0 || row >= height)
                 throw new MiniFitsException("row is outside the image");
 
-            Array.Copy(rowData, 0, data, row * width, width);
+            if (plane < 0 || plane >= planes)
+                throw new MiniFitsException("plane is outside the image");
+
+            var offset = plane * width * height + row * width;
+            Array.Copy(rowData, 0, data, offset, width);
 
             if (WriteImage(fptr, 20, 1, data.Length, data, ref status) != 0)
                 throw new MiniFitsException("Failed to update data");

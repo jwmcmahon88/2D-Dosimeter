@@ -15,25 +15,68 @@ namespace DosimeterController
 {
     public class Configuration
     {
+        // Step sizes, fixed by the hardware configuration
+        const decimal XStepsPerMM = 32;
+        const decimal YStepsPerMM = 32;
+
+        ScanOrigin origin;
         [CategoryAttribute("Geometry")]
         [DescriptionAttribute("The top-left corner of the scan area (in mm)")]
-        public ScanOrigin Origin { get; set; }
+        public ScanOrigin Origin
+        {
+            get { return origin; }
+            set
+            {
+                // Round to the nearest step
+                var x = Math.Round(value.X * XStepsPerMM) / XStepsPerMM;
+                var y = Math.Round(value.Y * YStepsPerMM) / YStepsPerMM;
+                origin = new ScanOrigin { X = x, Y = y };
+            }
+        }
 
+        ScanSize size;
         [Category("Geometry")]
         [Description("The size of the scan area (in mm)")]
-        public ScanSize Size { get; set; }
+        public ScanSize Size
+        {
+            get { return size; }
+            set
+            {
+                // Round to the nearest step
+                var width = Math.Round(value.Width * XStepsPerMM) / XStepsPerMM;
+                var height = Math.Round(value.Height * YStepsPerMM) / YStepsPerMM;
+                size = new ScanSize { Width = width, Height = height };
+            }
+        }
 
         [Category("Geometry")]
         [Description("The vertical offset of the scan head (in mm)")]
         public decimal FocusHeight { get; set; }
 
+        decimal rowStride;
         [Category("Geometry")]
         [Description("The spacing between adjacent rows (in mm)")]
-        public decimal RowStride { get; set; }
+        public decimal RowStride
+        {
+            get { return rowStride; }
+            set
+            {
+                // Round to the nearest step
+                rowStride = Math.Round(value * YStepsPerMM) / YStepsPerMM;
+            }
+        }
 
         [Category("Geometry")]
         [Description("The horizontal speed (in mm/min)")]
         public decimal RowSpeed { get; set; }
+
+        [Category("Geometry")]
+        [Description("The spacing between adjacent columns (in mm)")]
+        public decimal ColumnStride { get; private set; }
+
+        [Category("Geometry")]
+        [Description("The vertical row-change speed (in mm/min)")]
+        public decimal ColumnSpeed { get; set; }
 
         [Category("Metadata")]
         [Description("The ID of the film being scanned")]
@@ -60,6 +103,8 @@ namespace DosimeterController
             FocusHeight = 0;
             RowStride = 1;
             RowSpeed = 1000;
+            ColumnStride = 1 / 32m;
+            ColumnSpeed = 200;
             Film = "None";
             Operator = "Paul Chote";
             Description = "Test scan";
@@ -92,7 +137,7 @@ namespace DosimeterController
             if (destinationType == typeof(string) && value is ScanOrigin)
             {
                 var so = (ScanOrigin)value;
-                return string.Format("{0:F1}, {1:F1}", so.X, so.Y);
+                return string.Format("{0:F3}, {1:F3}", so.X, so.Y);
             }
 
             return base.ConvertTo(context, culture, value, destinationType);
@@ -163,7 +208,7 @@ namespace DosimeterController
             if (destinationType == typeof(string) && value is ScanSize)
             {
                 var so = (ScanSize)value;
-                return string.Format("{0:F1}, {1:F1}", so.Width, so.Height);
+                return string.Format("{0:F3}, {1:F3}", so.Width, so.Height);
             }
 
             return base.ConvertTo(context, culture, value, destinationType);

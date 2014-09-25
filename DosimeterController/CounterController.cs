@@ -86,6 +86,7 @@ namespace DosimeterController
             SendCheckedCommand("M1006");
         }
 
+        /// <summary>Read the current head position (in steps relative to the last zeroed position).</summary>
         public uint ReadPositionCounter()
         {
             ClearReadBuffer();
@@ -99,16 +100,14 @@ namespace DosimeterController
             return position;
         }
 
-        /// <summary>Set the current printer head position as the zero</summary>
+        /// <summary>Set the current printer head position as the position origin.</summary>
         public void ZeroPositionCounter()
         {
             ClearReadBuffer();
             SendCheckedCommand("M1002");
         }
 
-        /// <summary>
-        /// Send a gcode string to the counter and wait for an "ok" response. Throws if a different response is recieved.
-        /// </summary>
+        /// <summary>Send a gcode string to the counter and wait for an "ok" response. Throws if a different response is recieved.</summary>
         void SendCheckedCommand(string command)
         {
             SendCommand(command);
@@ -118,9 +117,7 @@ namespace DosimeterController
                 throw new CounterException("Recieved unexpected response: '" + response + "'");
         }
 
-        /// <summary>
-        /// Send a command to the counter
-        /// </summary>
+        /// <summary>Send an arbitrary command to the counter without waiting for a response.</summary>
         void SendCommand(string command)
         {
             try
@@ -133,9 +130,7 @@ namespace DosimeterController
             }
         }
 
-        /// <summary>
-        /// Read a response from the counter
-        /// </summary>
+        /// <summary>Read a response from the counter.</summary>
         string ReadResponse()
         {
             string response;
@@ -151,6 +146,7 @@ namespace DosimeterController
             return response;
         }
 
+        /// <summary>Clear any buffered response from the counter.</summary>
         void ClearReadBuffer()
         {
             try
@@ -163,6 +159,7 @@ namespace DosimeterController
             }
         }
 
+        /// <summary>Write a message to the debug log.</summary>
         void Log(string message)
         {
             OnLogMessage(message);
