@@ -100,19 +100,19 @@ namespace DosimeterController
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
                     var columns = endColumn - startColumn + 1;
 
-                    using (var fits = new MiniFits(config.DataFile, columns, rows, 2, true))
+                    using (var fits = new MiniFits(config.DataFile, columns, rows, 2, MiniFitsType.U16, true))
                     {
-                        fits.UpdateKey("OPERATOR", config.Operator, null);
-                        fits.UpdateKey("DATETIME", DateTime.Now.ToString("G"), "Time at the start of the scan");
-                        fits.UpdateKey("DESCRIPT", config.Description, null);
-                        fits.UpdateKey("SCANAREA", string.Format("{0:F3} {1:F3} {2:F3} {3:F3}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
-                        fits.UpdateKey("ROWSTART", startColumn, "The step count of the first data column");
-                        fits.UpdateKey("ROWSTRID", config.RowStride, 6, "The step size between rows (in mm)");
-                        fits.UpdateKey("ROWSPEED", config.RowSpeed, 4, "The row scan speed (in mm/minute)");
-                        fits.UpdateKey("COLSTRID", config.ColumnStride, 6, "The step size between columns (in mm)");
-                        fits.UpdateKey("COLSPEED", config.ColumnSpeed, 4, "The row-change speed (in mm/minute)");
+                        fits.WriteKey("OPERATOR", config.Operator, null);
+                        fits.WriteKey("DATETIME", DateTime.Now.ToString("G"), "Time at the start of the scan");
+                        fits.WriteKey("DESCRIPT", config.Description, null);
+                        fits.WriteKey("SCANAREA", string.Format("{0:F3} {1:F3} {2:F3} {3:F3}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
+                        fits.WriteKey("ROWSTART", startColumn, "The step count of the first data column");
+                        fits.WriteKey("ROWSTRID", config.RowStride, 6, "The step size between rows (in mm)");
+                        fits.WriteKey("ROWSPEED", config.RowSpeed, 4, "The row scan speed (in mm/minute)");
+                        fits.WriteKey("COLSTRID", config.ColumnStride, 6, "The step size between columns (in mm)");
+                        fits.WriteKey("COLSPEED", config.ColumnSpeed, 4, "The row-change speed (in mm/minute)");
 
-                        var data = new ushort[rows * columns];
+                        var data = new ushort[rows * columns * 2];
 
                         OnLogMessage("Moving to start position.");
                         UpdateStatus(HardwareStatus.Homing);
@@ -140,10 +140,12 @@ namespace DosimeterController
                             var primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);
                             var secondary = counter.ReadHistogram(CounterChannel.Secondary, startColumn, endColumn);
 
+                            Array.Copy(primary, 0, data, i * columns, columns);
+                            Array.Copy(secondary, 0, data, rows * columns + i * columns, columns);
+
                             OnLogMessage(string.Join(" ", primary));
 
-                            fits.SetImageRow(0, i, primary);
-                            fits.SetImageRow(1, i, secondary);
+                            fits.WriteImageData(data);
 
                             counter.ResetHistogram();
                             UpdateStatus(HardwareStatus.Scanning, i * 100m / rows);
