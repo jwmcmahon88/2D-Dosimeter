@@ -90,12 +90,8 @@ namespace DosimeterController
             {
                 try
                 {
-                    // Add an additional overscan on each end
-                    var overscan = 1m; // in mm
-                    var xStepsPermm = 32;
-
-                    var startColumn = (int)((config.Origin.X - overscan) * xStepsPermm);
-                    var endColumn = (int)((config.Origin.X + config.Size.Width + overscan) * xStepsPermm);
+                    var startColumn = (int)((config.Origin.X - config.RowOverscan) * config.XStepsPerMM);
+                    var endColumn = (int)((config.Origin.X + config.Size.Width + config.RowOverscan) * config.XStepsPerMM);
 
                     OnLogMessage(string.Format("Counter columns {0} to {1}", startColumn, endColumn));
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
@@ -121,7 +117,7 @@ namespace DosimeterController
                         printer.MoveToHome();
                         counter.ZeroPositionCounter();
 
-                        printer.MoveToPosition(config.Origin.X - overscan, config.Origin.Y, config.FocusHeight, 2000);
+                        printer.MoveToPosition(config.Origin.X - config.RowOverscan, config.Origin.Y, config.FocusHeight, 2000);
 
                         UpdateStatus(HardwareStatus.Scanning);
                         OnLogMessage("Starting scan.");
@@ -131,7 +127,7 @@ namespace DosimeterController
                         {
                             OnLogMessage(string.Format("Scanning row {0} of {1} ({2:F0}%)", i + 1, rows, i * 100 / rows));
                             counter.Start();
-                            printer.MoveDeltaX((config.Size.Width + 2 * overscan) * (i % 2 == 1 ? -1 : 1), config.RowSpeed);
+                            printer.MoveDeltaX((config.Size.Width + 2 * config.RowOverscan) * (i % 2 == 1 ? -1 : 1), config.RowSpeed);
                             counter.Stop();
 
                             // Read and save data to file

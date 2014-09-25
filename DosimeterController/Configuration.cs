@@ -16,8 +16,8 @@ namespace DosimeterController
     public class Configuration
     {
         // Step sizes, fixed by the hardware configuration
-        const decimal XStepsPerMM = 32;
-        const decimal YStepsPerMM = 32;
+        public readonly decimal XStepsPerMM = 32;
+        public readonly decimal YStepsPerMM = 32;
 
         ScanOrigin origin;
         [CategoryAttribute("Geometry")]
@@ -71,6 +71,10 @@ namespace DosimeterController
         public decimal RowSpeed { get; set; }
 
         [Category("Geometry")]
+        [Description("The overscan amount (in mm)")]
+        public decimal RowOverscan { get; set; }
+
+        [Category("Geometry")]
         [Description("The spacing between adjacent columns (in mm)")]
         public decimal ColumnStride { get; private set; }
 
@@ -103,6 +107,7 @@ namespace DosimeterController
             FocusHeight = 0;
             RowStride = 1;
             RowSpeed = 1000;
+            RowOverscan = 1.5m;
             ColumnStride = 1 / 32m;
             ColumnSpeed = 200;
             Film = "None";
