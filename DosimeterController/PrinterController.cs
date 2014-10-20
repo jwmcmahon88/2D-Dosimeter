@@ -44,7 +44,13 @@ namespace DosimeterController
         }
 
         /// <summary>Move to the home position. Blocks until the move is complete.</summary>
-        public void MoveToHome() { SendCheckedCommand("G28 X0 Y0"); }
+        public void MoveToHome()
+        {
+            // Need to move up in Z and home separately to prevent jamming
+            //MoveDeltaZ(1, 50);
+            //SendCheckedCommand("G28 Z0");
+            SendCheckedCommand("G28 X0 Y0");
+        }
 
         /// <summary>Move to an absolute position (in mm, mm/s). Blocks until the move is complete.</summary>
         public void MoveToPosition(decimal dx, decimal dy, decimal dz, decimal velocity)
@@ -75,6 +81,15 @@ namespace DosimeterController
         public void MoveDeltaY(decimal dy, decimal vy)
         {
             SendCheckedCommand(string.Format("G1 Y{0:F2} F{1:F2}", dy, vy));
+
+            // Wait for move to complete
+            SendCheckedCommand("M400");
+        }
+
+        /// <summary>Move a relative distance in the Z direction (in mm, mm/s). Blocks until the move is complete.</summary>
+        public void MoveDeltaZ(decimal dz, decimal vz)
+        {
+            SendCheckedCommand(string.Format("G1 Z{0:F2} F{1:F2}", dz, vz));
 
             // Wait for move to complete
             SendCheckedCommand("M400");

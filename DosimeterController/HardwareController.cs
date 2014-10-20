@@ -121,6 +121,7 @@ namespace DosimeterController
                         printer.MoveToHome();
                         counter.ZeroPositionCounter();
 
+                        printer.MoveToPosition(0, config.Origin.Y, config.FocusHeight, 2000);
                         printer.MoveToPosition(config.Origin.X - config.RowOverscan, config.Origin.Y, config.FocusHeight, 2000);
 
                         UpdateStatus(HardwareStatus.Scanning);
