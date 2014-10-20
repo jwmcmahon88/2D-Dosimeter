@@ -21,31 +21,35 @@ namespace DosimeterReduction
             //var rowStride = frame.GetDecimalKey("ROWSTRID");
             //var colStride = frame.GetDecimalKey("COLSTRID");
 
-            var outWidth = frame.Width / 32;
-            var outHeight = frame.Height;
+            var inWidth = frame.Dimensions[0];
+            var inHeight = frame.Dimensions[1];
+            var binning = 16;
+            var outWidth = inWidth / binning;
+            var outHeight = inHeight;
 
             var binnedFile = Path.GetDirectoryName(dataFile) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(dataFile) + ".binned.fits";
-            var binned = new MiniFits(binnedFile, outWidth, outHeight, 1, MiniFitsType.F64, true);
+            var binned = new MiniFits(binnedFile, new[] { outWidth, outHeight }, MiniFitsType.F64, true);
 
             var data = frame.ReadU16ImageData();
             var binnedData = new double[outWidth * outHeight];
-
-            for (var i = 0; i < frame.Height; i++)
+            for (var i = 0; i < outHeight; i++)
             {
+                Console.WriteLine("\nRow {0}", i);
                 for (var j = 0; j < outWidth; j++)
                 {
-                    var primaryOffset = frame.Width * i + 32 * j;
-                    var secondaryOffset = primaryOffset + frame.Width * frame.Height;
+                    var primaryOffset = inWidth * i + binning * j;
+                    var secondaryOffset = primaryOffset + inWidth * inHeight;
 
                     var primaryBinned = 0.0;
                     var secondaryBinned = 0.0;
-                    for (var k = 0; k < 32; k++)
+                    for (var k = 0; k < binning; k++)
                     {
                         primaryBinned += data[primaryOffset + k];
                         secondaryBinned += data[secondaryOffset + k];
                     }
 
-                    binnedData[i * outWidth + j] = primaryBinned / secondaryBinned;
+                    var outIndex = i * outWidth + j;
+                    binnedData[outIndex] = primaryBinned + secondaryBinned;
                 }
             }
 

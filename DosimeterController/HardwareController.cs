@@ -100,7 +100,8 @@ namespace DosimeterController
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
                     var columns = endColumn - startColumn + 1;
 
-                    using (var fits = new MiniFits(config.DataFile, columns, rows, 2, MiniFitsType.U16, true))
+                    var dimensions = new[] { columns, rows, 2 };
+                    using (var fits = new MiniFits(config.DataFile, dimensions, MiniFitsType.U16, true))
                     {
                         fits.WriteKey("OPERATOR", config.Operator, null);
                         fits.WriteKey("DATETIME", DateTime.Now.ToString("G"), "Time at the start of the scan");
