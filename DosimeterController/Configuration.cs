@@ -16,8 +16,8 @@ namespace DosimeterController
     public class Configuration
     {
         // Step sizes, fixed by the hardware configuration
-        public readonly decimal XStepsPerMM = 32;
-        public readonly decimal YStepsPerMM = 32;
+        public readonly decimal XStepsPerMM = 31.6m;
+        public readonly decimal YStepsPerMM = 31.6m;
 
         ScanOrigin origin;
         [CategoryAttribute("Geometry")]
