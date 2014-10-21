@@ -15,7 +15,7 @@ namespace DosimeterController
         public PrinterException(string message, Exception inner) : base(message, inner) { }
     }
 
-    class PrinterController
+    class PrinterController : IDisposable
     {
         public event LogMessageHandler OnLogMessage = _ => { };
 
@@ -41,6 +41,12 @@ namespace DosimeterController
             {
                 throw new PrinterException("Unable to initialize printer", e);
             }
+        }
+
+        public void Dispose()
+        {
+            port.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>Move to the home position. Blocks until the move is complete.</summary>

@@ -14,7 +14,7 @@ namespace DosimeterController
     public delegate void LogMessageHandler(string message);
     public delegate void HardwareStatusChangeDelegate(HardwareStatus status, decimal scanPercentage);
 
-    public class HardwareController
+    public class HardwareController : IDisposable
     {
         // Public bindings
         public event HardwareStatusChangeDelegate OnHardwareStatusChange = (a, b) => {};
@@ -64,6 +64,8 @@ namespace DosimeterController
                 {
                     OnLogMessage("Failed to open printer on " + printerPort);
                     UpdateStatus(HardwareStatus.Error);
+                    CloseSerialConnections();
+
                     return;
                 }
 
@@ -71,6 +73,12 @@ namespace DosimeterController
             });
 
             asyncControl.Start();
+        }
+
+        public void Dispose()
+        {
+            CloseSerialConnections();
+            GC.SuppressFinalize(this);
         }
 
         public void StartScan(Configuration config)
@@ -165,25 +173,37 @@ namespace DosimeterController
                 {
                     OnLogMessage("Printer error: " + e.Message);
                     UpdateStatus(HardwareStatus.Error);
-                    // Turn off laser
+                    CloseSerialConnections();
                 }
                 catch (CounterException e)
                 {
                     OnLogMessage("Counter error: " + e.Message);
                     UpdateStatus(HardwareStatus.Error);
 
-                    // Send emergency stop (M112)
+                    // TODO: Send emergency stop (M112)
+                    CloseSerialConnections();
                 }
                 catch (MiniFitsException e)
                 {
                     OnLogMessage("File error: " + e.Message);
                     UpdateStatus(HardwareStatus.Error);
-                    // Turn off laser and home printer
-                    // Send emergency stop (M112)
+
+                    // TODO: Turn off laser and home printer
+                    // TODO: Send emergency stop (M112)
+                    CloseSerialConnections();
                 }
             });
 
             asyncControl.Start();
+        }
+
+        void CloseSerialConnections()
+        {
+            printer.Dispose();
+            printer = null;
+
+            counter.Dispose();
+            counter = null;
         }
 
         public void CancelScan()

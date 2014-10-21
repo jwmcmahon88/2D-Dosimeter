@@ -17,7 +17,7 @@ namespace DosimeterController
         public CounterException(string message, Exception inner) : base(message, inner) { }
     }
 
-    class CounterController
+    class CounterController : IDisposable
     {
         public event LogMessageHandler OnLogMessage = _ => { };
 
@@ -38,6 +38,12 @@ namespace DosimeterController
             {
                 throw new CounterException("Unable to initialize counter", e);
             }
+        }
+
+        public void Dispose()
+        {
+            port.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>Enable the laser and start recording the pulse histogram.</summary>
