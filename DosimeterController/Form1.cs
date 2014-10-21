@@ -27,7 +27,7 @@ namespace DosimeterController
             // so they need to be marshalled back onto the UI thread
             controller.OnLogMessage += new LogMessageHandler(s => logText.Invoke((Action<string>)(ss => logText.AppendText(ss + "\n")), s));
             controller.OnHardwareStatusChange += new HardwareStatusChangeDelegate((s, p) => status.Invoke((Action)(() => UpdateStatus(s, p))));
-            controller.Initialize();
+            controller.Initialize(configuration);
 
             propertyGrid.SelectedObject = configuration;
         }
@@ -134,7 +134,7 @@ namespace DosimeterController
 
         void ReinitializeButtonClicked(object sender, EventArgs e)
         {
-            controller.Initialize();
+            controller.Initialize(configuration);
         }
 
         void StopButtonClicked(object sender, EventArgs e)

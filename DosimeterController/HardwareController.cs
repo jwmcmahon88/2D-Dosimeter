@@ -34,35 +34,32 @@ namespace DosimeterController
 
         Thread asyncControl;
 
-        public void Initialize()
+        public void Initialize(Configuration config)
         {
             UpdateStatus(HardwareStatus.Initializing);
 
             asyncControl = new Thread(() =>
             {
-                var printerPort = "COM3";
-                var counterPort = "COM7";
-
                 try
                 {
-                    counter = new CounterController(counterPort, 250000);
+                    counter = new CounterController(config.CounterPort, 250000);
                     counter.OnLogMessage += OnLogMessage;
                 }
                 catch (Exception)
                 {
-                    OnLogMessage("Failed to open counter on " + counterPort);
+                    OnLogMessage("Failed to open counter on " + config.CounterPort);
                     UpdateStatus(HardwareStatus.Error);
                     return;
                 }
 
                 try
                 {
-                    printer = new PrinterController(printerPort, 250000);
+                    printer = new PrinterController(config.PrinterPort, 250000);
                     printer.OnLogMessage += OnLogMessage;
                 }
                 catch (Exception)
                 {
-                    OnLogMessage("Failed to open printer on " + printerPort);
+                    OnLogMessage("Failed to open printer on " + config.PrinterPort);
                     UpdateStatus(HardwareStatus.Error);
                     CloseSerialConnections();
 

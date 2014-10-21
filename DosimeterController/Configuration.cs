@@ -99,6 +99,12 @@ namespace DosimeterController
         [EditorAttribute(typeof(SaveFileNameEditor), typeof(UITypeEditor))]
         public string DataFile { get; set; }
 
+        [Description("Printer COM port")]
+        public string PrinterPort { get; set; }
+
+        [Description("Counter COM port")]
+        public string CounterPort { get; set; }
+
         public Configuration()
         {
             // Set the default values
@@ -114,6 +120,9 @@ namespace DosimeterController
             Operator = "Paul Chote";
             Description = "Test scan";
             DataFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "scan.fits");
+
+            PrinterPort = "COM3";
+            CounterPort = "COM7";
         }
     }
 
