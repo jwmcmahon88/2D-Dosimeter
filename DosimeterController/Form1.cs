@@ -25,7 +25,7 @@ namespace DosimeterController
         {
             // The controller may call these events from a separate thread,
             // so they need to be marshalled back onto the UI thread
-            controller.OnLogMessage += new LogMessageHandler(s => logText.Invoke((Action<string>)(ss => logText.AppendText(ss+"\n")), s));
+            controller.OnLogMessage += new LogMessageHandler(s => logText.Invoke((Action<string>)(ss => logText.AppendText(ss + "\n")), s));
             controller.OnHardwareStatusChange += new HardwareStatusChangeDelegate((s, p) => status.Invoke((Action)(() => UpdateStatus(s, p))));
             controller.Initialize();
 
@@ -89,7 +89,8 @@ namespace DosimeterController
                     stopButton.Visible = true;
                     reinitializeButton.Enabled = false;
                     reinitializeButton.Visible = false;
-                    status.ForeColor = Color.Green; break;
+                    status.ForeColor = Color.Green;
+                    break;
             }
         }
 

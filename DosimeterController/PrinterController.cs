@@ -53,8 +53,8 @@ namespace DosimeterController
         public void MoveToHome()
         {
             // Need to move up in Z and home separately to prevent jamming
-            //MoveDeltaZ(1, 50);
-            //SendCheckedCommand("G28 Z0");
+            // MoveDeltaZ(1, 50);
+            // SendCheckedCommand("G28 Z0");
             SendCheckedCommand("G28 X0 Y0");
         }
 

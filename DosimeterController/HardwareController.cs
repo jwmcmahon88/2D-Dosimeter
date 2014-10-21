@@ -4,8 +4,8 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace DosimeterController
 {
@@ -17,8 +17,8 @@ namespace DosimeterController
     public class HardwareController : IDisposable
     {
         // Public bindings
-        public event HardwareStatusChangeDelegate OnHardwareStatusChange = (a, b) => {};
-        public event LogMessageHandler OnLogMessage = _ => {};
+        public event HardwareStatusChangeDelegate OnHardwareStatusChange = (a, b) => { };
+        public event LogMessageHandler OnLogMessage = _ => { };
         public HardwareStatus Status { get; private set; }
 
         PrinterController printer;
@@ -151,7 +151,7 @@ namespace DosimeterController
                             var secondary = counter.ReadHistogram(CounterChannel.Secondary, startColumn, endColumn);
 
                             Array.Copy(primary, 0, data, i * columns, columns);
-                            Array.Copy(secondary, 0, data, rows * columns + i * columns, columns);
+                            Array.Copy(secondary, 0, data, (rows + i) * columns, columns);
 
                             OnLogMessage(string.Join(" ", primary));
 

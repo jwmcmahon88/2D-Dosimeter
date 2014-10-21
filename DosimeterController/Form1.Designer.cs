@@ -14,9 +14,8 @@
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
-            {
                 components.Dispose();
-            }
+
             base.Dispose(disposing);
         }
 
@@ -138,7 +137,5 @@
         private System.Windows.Forms.PropertyGrid propertyGrid;
         private System.Windows.Forms.Button reinitializeButton;
         private System.Windows.Forms.Button stopButton;
-
     }
 }
-
