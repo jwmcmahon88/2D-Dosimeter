@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -36,7 +35,7 @@ namespace DosimeterController
 
         // Integer
         [DllImport(FITS_DLL, EntryPoint = "ffgkyj", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref long value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref int value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
         [DllImport(FITS_DLL, EntryPoint = "ffukyj", CallingConvention = FITS_CALLING_CONVENTION)]
         static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, long value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
@@ -50,13 +49,10 @@ namespace DosimeterController
 
         // Image data
         [DllImport(FITS_DLL, EntryPoint = "ffgpxv", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int ReadImage(IntPtr fptr, int datatype, int[] firstpix, long nelem, IntPtr nulval, ushort[] array, ref int anynul, ref int status);
+        static extern unsafe int ReadImage(IntPtr fptr, int datatype, int[] firstpix, long nelem, IntPtr nulval, void* array, ref int anynul, ref int status);
 
         [DllImport(FITS_DLL, EntryPoint = "ffppr", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int WriteImage(IntPtr fptr, int datatype, long firstelem, long nelem, ushort[] array, ref int status);
-
-        [DllImport(FITS_DLL, EntryPoint = "ffppr", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int WriteImage(IntPtr fptr, int datatype, long firstelem, long nelem, double[] array, ref int status);
+        static extern unsafe int WriteImage(IntPtr fptr, int datatype, long firstelem, long nelem, void* array, ref int status);
 
         [DllImport(FITS_DLL, EntryPoint = "ffclos", CallingConvention = FITS_CALLING_CONVENTION)]
         public static extern int CloseFile(IntPtr fptr, ref int status);
@@ -91,7 +87,7 @@ namespace DosimeterController
             if (MiniFits.OpenImage(ref fptr, filename, readwrite ? 1 : 0, ref status) != 0)
                 throw new MiniFitsException("Failed to open image");
 
-            dimensions = new []
+            dimensions = new[]
             {
                 ReadIntegerKey("NAXIS1"),
                 ReadIntegerKey("NAXIS2"),
@@ -100,7 +96,7 @@ namespace DosimeterController
         }
 
         /// <summary>Add or update a header keyword.</summary>
-        public void WriteKey(string key, string value, string comment)
+        public void WriteKey(string key, string value, string comment = null)
         {
             UpdateKey(fptr, key, value, comment, ref status);
             if (status != 0)
@@ -108,7 +104,7 @@ namespace DosimeterController
         }
 
         /// <summary>Add or update a header keyword.</summary>
-        public void WriteKey(string key, int value, string comment)
+        public void WriteKey(string key, int value, string comment = null)
         {
             UpdateKey(fptr, key, value, comment, ref status);
 
@@ -117,9 +113,10 @@ namespace DosimeterController
         }
 
         /// <summary>Add or update a header keyword.</summary>
-        public void WriteKey(string key, decimal value, int significantFigures, string comment)
+        public void WriteKey(string key, decimal value, int significantFigures, string comment = null)
         {
            var val = (double)value;
+
            UpdateKey(fptr, key, val, significantFigures - 1, comment, ref status);
 
             if (status != 0)
@@ -128,7 +125,7 @@ namespace DosimeterController
 
         public string ReadStringKey(string key)
         {
-            string value = "";
+            var value = string.Empty;
             if (MiniFits.ReadKey(fptr, key, ref value, null, ref status) != 0)
                 throw new MiniFitsException("Failed to read key");
 
@@ -137,7 +134,7 @@ namespace DosimeterController
 
         public int ReadIntegerKey(string key)
         {
-            long value = 0;
+            int value = 0;
             if (MiniFits.ReadKey(fptr, key, ref value, null, ref status) != 0)
                 throw new MiniFitsException("Failed to read key");
 
@@ -162,8 +159,12 @@ namespace DosimeterController
             if (imageData.Length != elements)
                 throw new MiniFitsException("Data length doesn't match frame geometry");
 
-            if (WriteImage(fptr, 82, 1, imageData.Length, imageData, ref status) != 0)
-                throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
+            unsafe
+            {
+                fixed (double* data = imageData)
+                if (WriteImage(fptr, 82, 1, elements, (void*)data, ref status) != 0)
+                    throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
+            }
         }
 
         public void WriteImageData(ushort[] imageData)
@@ -175,8 +176,12 @@ namespace DosimeterController
             if (imageData.Length != elements)
                 throw new MiniFitsException("Data length doesn't match frame geometry");
 
-            if (WriteImage(fptr, 20, 1, imageData.Length, imageData, ref status) != 0)
-                throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
+            unsafe
+            {
+                fixed (ushort* data = imageData)
+                if (WriteImage(fptr, 20, 1, elements, (void*)data, ref status) != 0)
+                    throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
+            }
         }
 
         public ushort[] ReadU16ImageData()
@@ -185,12 +190,17 @@ namespace DosimeterController
                 throw new MiniFitsException("Attempting to read ushort data from a double image");
 
             var elements = dimensions.Aggregate(1, (a, b) => a * b);
-            var data = new ushort[elements];
+            var imageData = new ushort[elements];
             int anynul = 0;
-            if (MiniFits.ReadImage(fptr, 20, new int[] { 1, 1, 1 }, elements, IntPtr.Zero, data, ref anynul, ref status) != 0)
-                throw new MiniFitsException("Failed to read pixel data");
 
-            return data;
+            unsafe
+            {
+                fixed (ushort* data = imageData)
+                if (MiniFits.ReadImage(fptr, 20, new int[] { 1, 1, 1 }, elements, IntPtr.Zero, data, ref anynul, ref status) != 0)
+                  throw new MiniFitsException("Failed to read pixel data");
+            }
+
+            return imageData;
         }
 
         public void Dispose()
