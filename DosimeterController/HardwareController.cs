@@ -196,10 +196,12 @@ namespace DosimeterController
 
         void CloseSerialConnections()
         {
-            printer.Dispose();
+            if (printer != null)
+                printer.Dispose();
             printer = null;
 
-            counter.Dispose();
+            if (counter != null)
+                counter.Dispose();
             counter = null;
         }
 
