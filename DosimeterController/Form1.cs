@@ -14,7 +14,7 @@ namespace DosimeterController
     public partial class Form1 : Form
     {
         readonly HardwareController controller = new HardwareController();
-        readonly Configuration configuration = new Configuration();
+        readonly Configuration configuration = Configuration.Load("configuration.dat");
 
         public Form1()
         {
@@ -96,6 +96,7 @@ namespace DosimeterController
 
         void StartButtonClicked(object sender, EventArgs e)
         {
+            configuration.Save("configuration.dat");
             logText.AppendText("Clicked action button\n");
 
             if (controller.Status != HardwareStatus.Idle)
@@ -129,6 +130,7 @@ namespace DosimeterController
 
         void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
+            configuration.Save("configuration.dat");
             controller.CancelScan();
         }
 

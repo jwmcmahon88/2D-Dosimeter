@@ -1,18 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
-using System.Drawing;
 using System.Drawing.Design;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows.Forms;
 
 namespace DosimeterController
 {
+    [Serializable]
     public class Configuration
     {
         // Step sizes, fixed by the hardware configuration
@@ -124,8 +121,30 @@ namespace DosimeterController
             PrinterPort = "COM3";
             CounterPort = "COM7";
         }
+
+        public void Save(string configFile)
+        {
+            var formatter = new BinaryFormatter();
+            using (var s = new FileStream(configFile, FileMode.Create, FileAccess.Write, FileShare.None))
+                formatter.Serialize(s, this);
+        }
+
+        public static Configuration Load(string configFile)
+        {
+            try
+            {
+                var formatter = new BinaryFormatter();
+                using (var s = new FileStream(configFile, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    return (Configuration)formatter.Deserialize(s);
+            }
+            catch (Exception)
+            {
+                return new Configuration();
+            }
+        }
     }
 
+    [Serializable]
     [TypeConverter(typeof(ScanOriginTypeConverter))]
     public struct ScanOrigin
     {
@@ -197,6 +216,7 @@ namespace DosimeterController
         }
     }
 
+    [Serializable]
     [TypeConverter(typeof(ScanSizeTypeConverter))]
     public struct ScanSize
     {
