@@ -28,7 +28,10 @@ namespace DosimeterController
 
         // String
         [DllImport(FITS_DLL, EntryPoint = "ffgkls", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string filename, [MarshalAs(UnmanagedType.LPStr)] ref string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref IntPtr value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+
+        [DllImport(FITS_DLL, EntryPoint = "fffree", CallingConvention = FITS_CALLING_CONVENTION)]
+        static extern int FreeFitsBuffer(IntPtr ptr, ref int status);
 
         [DllImport(FITS_DLL, EntryPoint = "ffukls", CallingConvention = FITS_CALLING_CONVENTION)]
         static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, [MarshalAs(UnmanagedType.LPStr)] string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
@@ -125,10 +128,12 @@ namespace DosimeterController
 
         public string ReadStringKey(string key)
         {
-            var value = string.Empty;
-            if (MiniFits.ReadKey(fptr, key, ref value, null, ref status) != 0)
+            var ptr = IntPtr.Zero;
+            if (MiniFits.ReadKey(fptr, key, ref ptr, null, ref status) != 0)
                 throw new MiniFitsException("Failed to read key");
 
+            var value = Marshal.PtrToStringAnsi(ptr);
+            FreeFitsBuffer(ptr, ref status);
             return value;
         }
 
