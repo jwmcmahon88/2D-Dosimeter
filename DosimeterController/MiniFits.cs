@@ -12,54 +12,57 @@ namespace DosimeterController
         public MiniFitsException(string message, Exception inner) : base(message, inner) { }
     }
 
-    public class MiniFits : IDisposable
+    public sealed class MiniFits : IDisposable
     {
-        internal const string FITS_DLL = "cfitsio.dll";
-        internal const CallingConvention FITS_CALLING_CONVENTION = CallingConvention.Cdecl;
+        private class NativeMethods
+        {
+            internal const string FITS_DLL = "cfitsio.dll";
+            internal const CallingConvention FITS_CALLING_CONVENTION = CallingConvention.Cdecl;
 
-        [DllImport(FITS_DLL, EntryPoint = "ffiopn", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int OpenImage(ref IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string filename, int iomode, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffiopn", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int OpenImage(ref IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string filename, int iomode, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffinit", CallingConvention = FITS_CALLING_CONVENTION)]
-        public static extern int CreateFile(ref IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string filename, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffinit", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int CreateFile(ref IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string filename, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffcrim", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int CreateImage(IntPtr fptr, int bitpix, int naxis, int[] naxes, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffcrim", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int CreateImage(IntPtr fptr, int bitpix, int naxis, int[] naxes, ref int status);
 
-        // String
-        [DllImport(FITS_DLL, EntryPoint = "ffgkls", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref IntPtr value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+            // String
+            [DllImport(FITS_DLL, EntryPoint = "ffgkls", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref IntPtr value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "fffree", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int FreeFitsBuffer(IntPtr ptr, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "fffree", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int FreeFitsBuffer(IntPtr ptr, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffukls", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, [MarshalAs(UnmanagedType.LPStr)] string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffukls", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, [MarshalAs(UnmanagedType.LPStr)] string value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        // Integer
-        [DllImport(FITS_DLL, EntryPoint = "ffgkyj", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref int value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+            // Integer
+            [DllImport(FITS_DLL, EntryPoint = "ffgkyj", CallingConvention = FITS_CALLING_CONVENTION, CharSet = CharSet.Unicode)]
+            public static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref int value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffukyj", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, long value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffukyj", CallingConvention = FITS_CALLING_CONVENTION, CharSet = CharSet.Unicode)]
+            public static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, long value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        // Floating point
-        [DllImport(FITS_DLL, EntryPoint = "ffgkyd", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref double value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+            // Floating point
+            [DllImport(FITS_DLL, EntryPoint = "ffgkyd", CallingConvention = FITS_CALLING_CONVENTION, CharSet = CharSet.Unicode)]
+            public static extern int ReadKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, ref double value, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffukyg", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, double value, int places, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffukyg", CallingConvention = FITS_CALLING_CONVENTION, CharSet = CharSet.Unicode)]
+            public static extern int UpdateKey(IntPtr fptr, [MarshalAs(UnmanagedType.LPStr)] string keyname, double value, int places, [MarshalAs(UnmanagedType.LPStr)] string comm, ref int status);
 
-        // Image data
-        [DllImport(FITS_DLL, EntryPoint = "ffgpxv", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern unsafe int ReadImage(IntPtr fptr, int datatype, int[] firstpix, long nelem, IntPtr nulval, void* array, ref int anynul, ref int status);
+            // Image data
+            [DllImport(FITS_DLL, EntryPoint = "ffgpxv", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern unsafe int ReadImage(IntPtr fptr, int datatype, int[] firstpix, long nelem, IntPtr nulval, void* array, ref int anynul, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffppr", CallingConvention = FITS_CALLING_CONVENTION)]
-        static extern unsafe int WriteImage(IntPtr fptr, int datatype, long firstelem, long nelem, void* array, ref int status);
+            [DllImport(FITS_DLL, EntryPoint = "ffppr", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern unsafe int WriteImage(IntPtr fptr, int datatype, long firstelem, long nelem, void* array, ref int status);
 
-        [DllImport(FITS_DLL, EntryPoint = "ffclos", CallingConvention = FITS_CALLING_CONVENTION)]
-        public static extern int CloseFile(IntPtr fptr, ref int status);
-
+            [DllImport(FITS_DLL, EntryPoint = "ffclos", CallingConvention = FITS_CALLING_CONVENTION)]
+            public static extern int CloseFile(IntPtr fptr, ref int status);
+        }
+        
         readonly IntPtr fptr;
         readonly int[] dimensions;
         readonly MiniFitsType type;
@@ -74,10 +77,10 @@ namespace DosimeterController
             if (overwrite)
                 filename = "!" + filename;
 
-            if (MiniFits.CreateFile(ref fptr, filename, ref status) != 0)
+            if (NativeMethods.CreateFile(ref fptr, filename, ref status) != 0)
                 throw new MiniFitsException("Failed to create file");
 
-            if (MiniFits.CreateImage(fptr, type == MiniFitsType.F64 ? -64 : 20, dimensions.Length, dimensions, ref status) != 0)
+            if (NativeMethods.CreateImage(fptr, type == MiniFitsType.F64 ? -64 : 20, dimensions.Length, dimensions, ref status) != 0)
                 throw new MiniFitsException("Failed to create image");
 
             this.dimensions = dimensions;
@@ -87,7 +90,7 @@ namespace DosimeterController
         /// <summary>Load an existing frame</summary>
         public MiniFits(string filename, bool readwrite)
         {
-            if (MiniFits.OpenImage(ref fptr, filename, readwrite ? 1 : 0, ref status) != 0)
+            if (NativeMethods.OpenImage(ref fptr, filename, readwrite ? 1 : 0, ref status) != 0)
                 throw new MiniFitsException("Failed to open image");
 
             dimensions = new[]
@@ -101,7 +104,7 @@ namespace DosimeterController
         /// <summary>Add or update a header keyword.</summary>
         public void WriteKey(string key, string value, string comment = null)
         {
-            UpdateKey(fptr, key, value, comment, ref status);
+            NativeMethods.UpdateKey(fptr, key, value, comment, ref status);
             if (status != 0)
                 throw new MiniFitsException("Failed to update key");
         }
@@ -109,7 +112,7 @@ namespace DosimeterController
         /// <summary>Add or update a header keyword.</summary>
         public void WriteKey(string key, int value, string comment = null)
         {
-            UpdateKey(fptr, key, value, comment, ref status);
+            NativeMethods.UpdateKey(fptr, key, value, comment, ref status);
 
             if (status != 0)
                 throw new MiniFitsException("Failed to update key");
@@ -120,7 +123,7 @@ namespace DosimeterController
         {
            var val = (double)value;
 
-           UpdateKey(fptr, key, val, significantFigures - 1, comment, ref status);
+           NativeMethods.UpdateKey(fptr, key, val, significantFigures - 1, comment, ref status);
 
             if (status != 0)
                 throw new MiniFitsException("Failed to update key");
@@ -129,18 +132,18 @@ namespace DosimeterController
         public string ReadStringKey(string key)
         {
             var ptr = IntPtr.Zero;
-            if (MiniFits.ReadKey(fptr, key, ref ptr, null, ref status) != 0)
+            if (NativeMethods.ReadKey(fptr, key, ref ptr, null, ref status) != 0)
                 throw new MiniFitsException("Failed to read key");
 
             var value = Marshal.PtrToStringAnsi(ptr);
-            FreeFitsBuffer(ptr, ref status);
+            NativeMethods.FreeFitsBuffer(ptr, ref status);
             return value;
         }
 
         public int ReadIntegerKey(string key)
         {
             int value = 0;
-            if (MiniFits.ReadKey(fptr, key, ref value, null, ref status) != 0)
+            if (NativeMethods.ReadKey(fptr, key, ref value, null, ref status) != 0)
                 throw new MiniFitsException("Failed to read key");
 
             return (int)value;
@@ -149,7 +152,7 @@ namespace DosimeterController
         public decimal ReadDecimalKey(string key)
         {
             double value = 0;
-            if (MiniFits.ReadKey(fptr, key, ref value, null, ref status) != 0)
+            if (NativeMethods.ReadKey(fptr, key, ref value, null, ref status) != 0)
                 throw new MiniFitsException("Failed to read key");
 
             return (decimal)value;
@@ -167,8 +170,8 @@ namespace DosimeterController
             unsafe
             {
                 fixed (double* data = imageData)
-                if (WriteImage(fptr, 82, 1, elements, (void*)data, ref status) != 0)
-                    throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
+                    if (NativeMethods.WriteImage(fptr, 82, 1, elements, (void*)data, ref status) != 0)
+                        throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
             }
         }
 
@@ -184,8 +187,8 @@ namespace DosimeterController
             unsafe
             {
                 fixed (ushort* data = imageData)
-                if (WriteImage(fptr, 20, 1, elements, (void*)data, ref status) != 0)
-                    throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
+                    if (NativeMethods.WriteImage(fptr, 20, 1, elements, (void*)data, ref status) != 0)
+                        throw new MiniFitsException(string.Format("Failed to update data with error {0}", status));
             }
         }
 
@@ -201,7 +204,7 @@ namespace DosimeterController
             unsafe
             {
                 fixed (ushort* data = imageData)
-                if (MiniFits.ReadImage(fptr, 20, new int[] { 1, 1, 1 }, elements, IntPtr.Zero, data, ref anynul, ref status) != 0)
+                if (NativeMethods.ReadImage(fptr, 20, new int[] { 1, 1, 1 }, elements, IntPtr.Zero, data, ref anynul, ref status) != 0)
                   throw new MiniFitsException("Failed to read pixel data");
             }
 
@@ -211,7 +214,12 @@ namespace DosimeterController
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            CloseFile(fptr, ref status);
+            NativeMethods.CloseFile(fptr, ref status);
+        }
+
+        ~MiniFits()
+        {
+            Dispose();
         }
     }
 }
