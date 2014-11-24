@@ -48,7 +48,7 @@ namespace DosimeterReduction
 
             var binnedFile = Path.GetDirectoryName(dataFile) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(dataFile) + ".binned.fits";
             
-            using (var binned = new MiniFits(binnedFile, new[] { outWidth, outHeight }, MiniFitsType.F64, true))
+            using (var binned = new MiniFits(binnedFile, new[] { outWidth, outHeight, 3 }, MiniFitsType.F64, true))
             {
                 // Define the image coordinates for the display program
                 // Physical coordinates
@@ -76,7 +76,8 @@ namespace DosimeterReduction
                 binned.WriteKey("WCSNAME", "Scan Pos.");
 
                 var data = frame.ReadU16ImageData();
-                var binnedData = new double[outWidth * outHeight];
+                var frameStride = outWidth * outHeight;
+                var binnedData = new double[frameStride * 3];
                 for (var i = 0; i < outHeight; i++)
                 {
                     for (var j = 0; j < outWidth; j++)
@@ -93,7 +94,9 @@ namespace DosimeterReduction
                         }
 
                         var outIndex = i * outWidth + j;
-                        binnedData[outIndex] = primaryBinned + secondaryBinned;
+                        binnedData[outIndex] = primaryBinned / secondaryBinned;
+                        binnedData[outIndex + frameStride] = primaryBinned;
+                        binnedData[outIndex + 2 * frameStride] = secondaryBinned;
                     }
                 }
 
