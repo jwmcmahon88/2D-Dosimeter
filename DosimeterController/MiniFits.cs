@@ -211,6 +211,11 @@ namespace DosimeterController
             return imageData;
         }
 
+        public void ClearErrorStatus()
+        {
+            status = 0;
+        }
+
         public void Dispose()
         {
             GC.SuppressFinalize(this);

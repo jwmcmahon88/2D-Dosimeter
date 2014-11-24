@@ -17,6 +17,20 @@ namespace DosimeterReduction
             var rowStride = frame.ReadDecimalKey("ROWSTRID");
             var colStride = frame.ReadDecimalKey("COLSTRID");
 
+            var primaryDark = 0.0;
+            var secondaryDark = 0.0;
+
+            try
+            {
+                // Older frames don't specify dark counts, so let these gracefully fail
+                primaryDark = (double)frame.ReadDecimalKey("DARKCNTA");
+                secondaryDark = (double)frame.ReadDecimalKey("DARKCNTB");
+            }
+            catch (Exception)
+            {
+                frame.ClearErrorStatus();
+            }
+
             var region = frame.ReadStringKey("SCANAREA")
                 .Split(' ')
                 .Select(x => decimal.Parse(x))
@@ -74,8 +88,8 @@ namespace DosimeterReduction
                         var secondaryBinned = 0.0;
                         for (var k = 0; k < binning; k++)
                         {
-                            primaryBinned += data[primaryOffset + k];
-                            secondaryBinned += data[secondaryOffset + k];
+                            primaryBinned += data[primaryOffset + k] - primaryDark;
+                            secondaryBinned += data[secondaryOffset + k] - secondaryDark;
                         }
 
                         var outIndex = i * outWidth + j;

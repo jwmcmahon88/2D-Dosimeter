@@ -102,6 +102,12 @@ namespace DosimeterController
         [Description("Counter COM port")]
         public string CounterPort { get; set; }
 
+        [Description("Mean dark counts per (unbinned) pixel for the primary detector")]
+        public decimal PrimaryDarkCounts { get; set; }
+
+        [Description("Mean dark counts per (unbinned) pixel for the secondary detector")]
+        public decimal SecondaryDarkCounts { get; set; }
+
         public Configuration()
         {
             // Set the default values
@@ -120,6 +126,8 @@ namespace DosimeterController
 
             PrinterPort = "COM3";
             CounterPort = "COM7";
+            PrimaryDarkCounts = 2;
+            SecondaryDarkCounts = 1040;
         }
 
         public void Save(string configFile)

@@ -14,7 +14,7 @@ namespace DosimeterController
     public delegate void LogMessageHandler(string message);
     public delegate void HardwareStatusChangeDelegate(HardwareStatus status, decimal scanPercentage);
 
-    public class HardwareController : IDisposable
+    public sealed class HardwareController : IDisposable
     {
         // Public bindings
         public event HardwareStatusChangeDelegate OnHardwareStatusChange = (a, b) => { };
@@ -117,6 +117,9 @@ namespace DosimeterController
                         fits.WriteKey("ROWSPEED", config.RowSpeed, 4, "The row scan speed (in mm/minute)");
                         fits.WriteKey("COLSTRID", config.ColumnStride, 6, "The step size between columns (in mm)");
                         fits.WriteKey("COLSPEED", config.ColumnSpeed, 4, "The row-change speed (in mm/minute)");
+
+                        fits.WriteKey("DARKCNTA", config.PrimaryDarkCounts, 4, "Mean dark counts per unbinned pixel for detector A");
+                        fits.WriteKey("DARKCNTB", config.SecondaryDarkCounts, 4, "Mean dark counts per unbinned pixel for detector B");
 
                         var data = new ushort[rows * columns * 2];
 
