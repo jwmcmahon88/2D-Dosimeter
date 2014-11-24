@@ -143,7 +143,10 @@ namespace DosimeterController
 
                             OnLogMessage(string.Format("Scanning row {0} of {1} ({2:F0}%)", i + 1, rows, i * 100 / rows));
                             counter.Start();
-                            printer.MoveDeltaX((config.Size.Width + 2 * config.RowOverscan) * (i % 2 == 1 ? -1 : 1), config.RowSpeed);
+
+                            // Collect photons while scanning left -> right
+                            // Scanning in one direction only ensures that the same optical configuration is used for each row
+                            printer.MoveDeltaX(config.Size.Width + 2 * config.RowOverscan, config.RowSpeed);
                             counter.Stop();
 
                             // Read and save data to file
@@ -159,6 +162,9 @@ namespace DosimeterController
 
                             counter.ResetHistogram();
                             UpdateStatus(HardwareStatus.Scanning, i * 100m / rows);
+
+                            // Return to the start of the next row
+                            printer.MoveDeltaX(-(config.Size.Width + 2 * config.RowOverscan), config.RowSpeed);
                             printer.MoveDeltaY(config.RowStride, config.ColumnSpeed);
                         }
 

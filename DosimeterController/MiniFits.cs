@@ -158,6 +158,11 @@ namespace DosimeterController
             return (decimal)value;
         }
 
+        public void CopyKey(string key, MiniFits from)
+        {
+
+        }
+
         public void WriteImageData(double[] imageData)
         {
             if (type != MiniFitsType.F64)
