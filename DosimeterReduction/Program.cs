@@ -25,7 +25,10 @@ namespace DosimeterReduction
             var inWidth = frame.Dimensions[0];
             var inHeight = frame.Dimensions[1];
 
-            var binning = 8;
+            var binning = (int)Math.Round(rowStride / colStride);
+            if (binning <= 0)
+                throw new InvalidOperationException("Invalid row or column stride");
+
             var outWidth = inWidth / binning;
             var outHeight = inHeight;
 

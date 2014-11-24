@@ -111,7 +111,7 @@ namespace DosimeterController
             RowStride = 1;
             RowSpeed = 1000;
             RowOverscan = 1.5m;
-            ColumnStride = 1 / 32m;
+            ColumnStride = 1 / YStepsPerMM;
             ColumnSpeed = 200;
             Film = "None";
             Operator = "Paul Chote";
