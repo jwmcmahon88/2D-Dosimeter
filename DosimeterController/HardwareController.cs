@@ -120,10 +120,9 @@ namespace DosimeterController
                         fits.WriteKey("SCANAREA", string.Format("{0:F3} {1:F3} {2:F3} {3:F3}", config.Origin.X, config.Origin.Y, config.Size.Width, config.Size.Height), "The requested scan area (X Y W H in mm)");
                         fits.WriteKey("ROWSTART", startColumn, "The step count of the first data column");
                         fits.WriteKey("ROWSTRID", config.RowStride, 6, "The step size between rows (in mm)");
-                        fits.WriteKey("ROWSPEED", config.RowSpeed, 4, "The row scan speed (in mm/minute)");
+                        fits.WriteKey("ROWSPEED", config.ScanSpeed, 4, "The row scan speed (in mm/minute)");
                         fits.WriteKey("OVERSCAN", overscanCols, 6, "The row overscan before/after the horizontal scan area (in columns).");
                         fits.WriteKey("COLSTRID", config.ColumnStride, 6, "The step size between columns (in mm)");
-                        fits.WriteKey("COLSPEED", config.ColumnSpeed, 4, "The row-change speed (in mm/minute)");
 
                         fits.WriteKey("DARKCNTA", config.PrimaryDarkCounts, 4, "Mean dark counts per unbinned pixel for detector A");
                         fits.WriteKey("DARKCNTB", config.SecondaryDarkCounts, 4, "Mean dark counts per unbinned pixel for detector B");
@@ -136,8 +135,8 @@ namespace DosimeterController
                         printer.MoveToHome();
                         counter.ZeroPositionCounter();
 
-                        printer.MoveToPosition(0, config.Origin.Y, config.FocusHeight, 2000);
-                        printer.MoveToPosition(config.Origin.X - config.RowOverscan, config.Origin.Y, config.FocusHeight, 2000);
+                        printer.MoveToPosition(0, config.Origin.Y, config.FocusHeight, config.SlewSpeed);
+                        printer.MoveToPosition(config.Origin.X - config.RowOverscan, config.Origin.Y, config.FocusHeight, config.SlewSpeed);
 
                         UpdateStatus(HardwareStatus.Scanning);
                         OnLogMessage("Starting scan.");
@@ -153,7 +152,7 @@ namespace DosimeterController
 
                             // Collect photons while scanning left -> right
                             // Scanning in one direction only ensures that the same optical configuration is used for each row
-                            printer.MoveDeltaX(config.Size.Width + 2 * config.RowOverscan, config.RowSpeed);
+                            printer.MoveDeltaX(config.Size.Width + 2 * config.RowOverscan, config.ScanSpeed);
                             counter.Stop();
 
                             // Read and save data to file
@@ -171,8 +170,8 @@ namespace DosimeterController
                             UpdateStatus(HardwareStatus.Scanning, i * 100m / rows);
 
                             // Return to the start of the next row
-                            printer.MoveDeltaX(-(config.Size.Width + 2 * config.RowOverscan), config.RowSpeed);
-                            printer.MoveDeltaY(config.RowStride, config.ColumnSpeed);
+                            printer.MoveDeltaX(-(config.Size.Width + 2 * config.RowOverscan), config.SlewSpeed);
+                            printer.MoveDeltaY(config.RowStride, config.ScanSpeed);
                         }
 
                         OnLogMessage("Scan complete.");

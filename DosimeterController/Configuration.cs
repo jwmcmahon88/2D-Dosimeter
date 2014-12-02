@@ -64,8 +64,12 @@ namespace DosimeterController
         }
 
         [Category("Geometry")]
-        [Description("The horizontal speed (in mm/min)")]
-        public decimal RowSpeed { get; set; }
+        [Description("The horizontal scan speed (in mm/min)")]
+        public decimal ScanSpeed { get; set; }
+
+        [Category("Geometry")]
+        [Description("The general (not scanning) movement speed (in mm/min")]
+        public decimal SlewSpeed { get; set; }
 
         [Category("Geometry")]
         [Description("The overscan amount (in mm)")]
@@ -74,10 +78,6 @@ namespace DosimeterController
         [Category("Geometry")]
         [Description("The spacing between adjacent columns (in mm)")]
         public decimal ColumnStride { get; private set; }
-
-        [Category("Geometry")]
-        [Description("The vertical row-change speed (in mm/min)")]
-        public decimal ColumnSpeed { get; set; }
 
         [Category("Metadata")]
         [Description("The ID of the film being scanned")]
@@ -115,10 +115,10 @@ namespace DosimeterController
             Size = new ScanSize { Width = 100, Height = 100 };
             FocusHeight = 0;
             RowStride = 1;
-            RowSpeed = 1000;
+            ScanSpeed = 1000;
+            SlewSpeed = 2000;
             RowOverscan = 1.5m;
             ColumnStride = 1 / YStepsPerMM;
-            ColumnSpeed = 200;
             Film = "None";
             Operator = "Paul Chote";
             Description = "Test scan";
