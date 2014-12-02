@@ -100,6 +100,12 @@ namespace DosimeterController
                 {
                     var startColumn = (int)((config.Origin.X - config.RowOverscan) * config.XStepsPerMM);
                     var endColumn = (int)((config.Origin.X + config.Size.Width + config.RowOverscan) * config.XStepsPerMM);
+                    var overscanCols = (int)(config.Origin.X * config.XStepsPerMM) - startColumn;
+                    if (overscanCols < 0)
+                    {
+                        OnLogMessage("Overscan region extends outside the scannable region. Inset the scan area or reduce the overscan. status is error.");
+                        return;
+                    }
 
                     OnLogMessage(string.Format("Counter columns {0} to {1}", startColumn, endColumn));
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
@@ -115,6 +121,7 @@ namespace DosimeterController
                         fits.WriteKey("ROWSTART", startColumn, "The step count of the first data column");
                         fits.WriteKey("ROWSTRID", config.RowStride, 6, "The step size between rows (in mm)");
                         fits.WriteKey("ROWSPEED", config.RowSpeed, 4, "The row scan speed (in mm/minute)");
+                        fits.WriteKey("OVERSCAN", overscanCols, 6, "The row overscan before/after the horizontal scan area (in columns).");
                         fits.WriteKey("COLSTRID", config.ColumnStride, 6, "The step size between columns (in mm)");
                         fits.WriteKey("COLSPEED", config.ColumnSpeed, 4, "The row-change speed (in mm/minute)");
 

@@ -36,6 +36,20 @@ namespace DosimeterReduction
                 .Select(x => decimal.Parse(x))
                 .ToArray();
 
+            
+            var overscanColumns = 0;
+            try
+            {
+                // Older frames don't specify the overscan
+                overscanColumns = frame.ReadIntegerKey("OVERSCAN");
+            }
+            catch (Exception)
+            {
+                frame.ClearErrorStatus();
+            }
+
+            Console.WriteLine("Overscan columns: {0}", overscanColumns);
+
             var inWidth = frame.Dimensions[0];
             var inHeight = frame.Dimensions[1];
 
@@ -43,7 +57,7 @@ namespace DosimeterReduction
             if (binning <= 0)
                 throw new InvalidOperationException("Invalid row or column stride");
 
-            var outWidth = inWidth / binning;
+            var outWidth = (inWidth - 2 * overscanColumns) / binning;
             var outHeight = inHeight;
 
             var binnedFile = Path.GetDirectoryName(dataFile) + Path.DirectorySeparatorChar + Path.GetFileNameWithoutExtension(dataFile) + ".binned.fits";
@@ -82,7 +96,7 @@ namespace DosimeterReduction
                 {
                     for (var j = 0; j < outWidth; j++)
                     {
-                        var primaryOffset = inWidth * i + binning * j;
+                        var primaryOffset = inWidth * i + binning * j + overscanColumns;
                         var secondaryOffset = primaryOffset + inWidth * inHeight;
 
                         var primaryBinned = 0.0;
