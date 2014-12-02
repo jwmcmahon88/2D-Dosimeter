@@ -126,8 +126,8 @@ namespace DosimeterController
 
             PrinterPort = "COM3";
             CounterPort = "COM7";
-            PrimaryDarkCounts = 2;
-            SecondaryDarkCounts = 1040;
+            PrimaryDarkCounts = 22.8m;
+            SecondaryDarkCounts = 5.7m;
         }
 
         public void Save(string configFile)
