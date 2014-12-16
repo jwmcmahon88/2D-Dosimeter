@@ -101,13 +101,13 @@ namespace DosimeterController
                     var startColumn = (int)((config.Origin.X - config.RowOverscan) * config.XStepsPerMM);
                     var endColumn = (int)((config.Origin.X + config.Size.Width + config.RowOverscan) * config.XStepsPerMM);
                     var overscanCols = (int)(config.Origin.X * config.XStepsPerMM) - startColumn;
-                    if (overscanCols < 0)
+                    if (startColumn < 0)
                     {
-                        OnLogMessage("Overscan region extends outside the scannable region. Inset the scan area or reduce the overscan. status is error.");
+                        OnLogMessage("Overscan region extends outside the scannable region. Inset the scan area or reduce the overscan.");
                         return;
                     }
 
-                    OnLogMessage(string.Format("Counter columns {0} to {1}", startColumn, endColumn));
+                    OnLogMessage(string.Format("Counter columns {0} to {1}, overscan {2}", startColumn, endColumn, overscanCols));
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
                     var columns = endColumn - startColumn + 1;
 
