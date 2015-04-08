@@ -12,7 +12,18 @@ namespace DosimeterReduction
     {
         static void Main(string[] args)
         {
-            var dataFile = args[0];
+            string dataFile = "";
+            try
+            {
+                //Make it crash nicely when run without a filename
+                dataFile = args[0];
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("No filename passed, now exiting" + e);
+                return;
+            }
+            
             var frame = new MiniFits(dataFile, false);
             var rowStride = frame.ReadDecimalKey("ROWSTRID");
             var colStride = frame.ReadDecimalKey("COLSTRID");
