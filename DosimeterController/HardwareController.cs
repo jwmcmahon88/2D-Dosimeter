@@ -111,6 +111,7 @@ namespace DosimeterController
                     var rows = (int)Math.Ceiling(config.Size.Height / config.RowStride);
                     var columns = endColumn - startColumn + 1;
 
+
                     var dimensions = new[] { columns, rows, 2 };
                     using (var fits = new MiniFits(config.DataFile, dimensions, MiniFitsType.U16, true))
                     {
@@ -141,9 +142,14 @@ namespace DosimeterController
                         UpdateStatus(HardwareStatus.Scanning);
                         OnLogMessage("Starting scan.");
 
+
+                        double TotalTime=1;
+
                         // Scan rows
                         for (var i = 0; i < rows; i++)
                         {
+                            var StartTime = DateTime.Now;
+
                             if (cancelScan)
                                 break;
 
@@ -172,6 +178,16 @@ namespace DosimeterController
                             // Return to the start of the next row
                             printer.MoveDeltaX(-(config.Size.Width + 2 * config.RowOverscan), config.SlewSpeed);
                             printer.MoveDeltaY(config.RowStride, config.ScanSpeed);
+                            
+                            //Calculate total, average and finish times
+                            TimeSpan RowTime = DateTime.Now - StartTime;
+                            TotalTime += RowTime.TotalSeconds;
+                            var AverageRowTime = TotalTime / (i+1);
+                            DateTime ECT=DateTime.Now;
+                            ECT=ECT.AddSeconds(AverageRowTime*(rows-i));         
+                            OnLogMessage(string.Format("Time elapsed: {0}s, Average Time per row: {1}s", TotalTime.ToString("f0"), AverageRowTime.ToString("f0"));
+                            OnLogMessage("Estimated Completion: " + ECT.ToLongTimeString());
+
                         }
 
                         OnLogMessage("Scan complete.");
@@ -208,6 +224,7 @@ namespace DosimeterController
 
             asyncControl.Start();
         }
+
 
         void CloseSerialConnections()
         {
