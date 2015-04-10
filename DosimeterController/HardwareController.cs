@@ -185,7 +185,7 @@ namespace DosimeterController
                             var AverageRowTime = TotalTime / (i+1);
                             DateTime ECT=DateTime.Now;
                             ECT=ECT.AddSeconds(AverageRowTime*(rows-i));         
-                            OnLogMessage(string.Format("Time elapsed: {0}s, Average Time per row: {1}s", TotalTime.ToString("f0"), AverageRowTime.ToString("f0"));
+                            OnLogMessage(string.Format("Time elapsed: {0}s, Average Time per row: {1}s", TotalTime.ToString("f0"), AverageRowTime.ToString("f0")));
                             OnLogMessage("Estimated Completion: " + ECT.ToLongTimeString());
 
                         }
