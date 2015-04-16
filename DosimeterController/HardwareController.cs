@@ -146,12 +146,13 @@ namespace DosimeterController
                         double TotalTime=1;
 
                         // Scan rows
-                        for (var i = 0; i < rows; i++)
+                        for (var i = 0; i < rows; i+=1)
                         {
                             var StartTime = DateTime.Now;
 
                             if (cancelScan)
                                 break;
+                            OnLogMessage("Starting read at: " + counter.ReadPositionCounter().ToString());
 
                             OnLogMessage(string.Format("Scanning row {0} of {1} ({2:F0}%)", i + 1, rows, i * 100 / rows));
                             counter.Start();
@@ -168,17 +169,36 @@ namespace DosimeterController
                             Array.Copy(primary, 0, data, i * columns, columns);
                             Array.Copy(secondary, 0, data, (rows + i) * columns, columns);
 
-                            OnLogMessage(string.Join(" ", primary));
+                            //OnLogMessage(string.Join(" ", primary));
 
                             fits.WriteImageData(data);
 
                             counter.ResetHistogram();
                             UpdateStatus(HardwareStatus.Scanning, i * 100m / rows);
 
+                            
                             // Return to the start of the next row
                             printer.MoveDeltaX(-(config.Size.Width + 2 * config.RowOverscan), config.SlewSpeed);
                             printer.MoveDeltaY(config.RowStride, config.ScanSpeed);
                             
+                            /**
+                            //Scan on the way back too
+                            OnLogMessage("Starting at " + counter.ReadPositionCounter().ToString());
+                            printer.MoveDeltaY(config.RowStride, config.ScanSpeed);
+                            counter.Start();
+                            printer.MoveDeltaX(-1 * (config.Size.Width + (2 * config.RowOverscan)), config.ScanSpeed);
+                            counter.Stop();
+
+                            primary = counter.ReadHistogram(CounterChannel.Primary, startColumn, endColumn);
+                            secondary = counter.ReadHistogram(CounterChannel.Secondary, startColumn, endColumn);
+
+                            counter.ResetHistogram();
+
+                            Array.Copy(primary, 0, data, (i + 1) * columns, columns);
+                            Array.Copy(secondary, 0, data, (rows + i + 1) * columns, columns);
+                            fits.WriteImageData(data);
+                            */
+
                             //Calculate total, average and finish times
                             TimeSpan RowTime = DateTime.Now - StartTime;
                             TotalTime += RowTime.TotalSeconds;
